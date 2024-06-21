@@ -1,16 +1,13 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useRef, useState } from 'react'
+import {useContext } from 'react'
 import Chat from './Chat';
 import Login from './Login';
+import { Context } from './context';
 
 function App() {
-  const [username, setUsername] = useState();
-  
+  const {state: {username}} = useContext(Context);
   let content = username ? 
-  <Chat
-    username={username} setUsername={setUsername}/> : 
-  <Login 
-    setUsername={setUsername} />
+  <Chat /> : 
+  <Login />
 
   return (
     <>
@@ -18,5 +15,6 @@ function App() {
     </>
   )
 }
+
 
 export default App

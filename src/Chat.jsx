@@ -2,7 +2,7 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
 import UserChats from "./UserChats";
 import {getAuthHeader} from "./utils";
@@ -10,6 +10,7 @@ import styled from "styled-components";
 import { createGlobalStyle } from 'styled-components';
 import Sidebar from "./Sidebar";
 import OpenChat from "./OpenChat";
+import { Context } from "./context";
 
 const GlobalStyles = createGlobalStyle`
   *,
@@ -22,6 +23,13 @@ const GlobalStyles = createGlobalStyle`
   * {
     margin: 0;
     padding: 0;
+    font-family: "Quicksand", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+  }
+  p{
+    
   }
 `;
 
@@ -44,8 +52,9 @@ const StyledMain = styled.main`
 `;  
 
 
-export default function Chat(props){
-  //const [user, setUser] = useState({username: "", avatar: ""});
+export default function Chat(){
+  const {state: {username}} = useContext(Context);
+
   const [messages, setMessages] = useState([]);
   const [currentChat, setCurrentChat] = useState({chat: "", type: ""});
 
@@ -58,7 +67,7 @@ export default function Chat(props){
         webSocketFactory: () => socket,
         onConnect: () => {
           console.log("attempting connect!")
-         stompClient.subscribe('/user/' + props.username + '/queue/messages', 
+         stompClient.subscribe('/user/' + username + '/queue/messages', 
           onPrivateMessageReceived, getAuthHeader());
          subscribeToGroups();
         },
@@ -128,14 +137,13 @@ export default function Chat(props){
   connectToWebsocket();
  }, []);
 
- console.log("chat rendered")
  return(
   <>
     <GlobalStyles />
     <StyledMain>
-      <Sidebar setUsername={props.setUsername} username={props.username}/>
+      <Sidebar />
       <UserChats setCurrentChat={setCurrentChat}/>
-      <OpenChat stompClient={stompClientRef} currentChat={currentChat} messages={messages} setMessages={setMessages} username={props.username}/>
+      <OpenChat stompClient={stompClientRef} currentChat={currentChat} messages={messages} setMessages={setMessages} />
     </StyledMain>
    </>
  );

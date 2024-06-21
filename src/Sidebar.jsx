@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {getAuthHeader} from "./utils";
 import styled from "styled-components";
+import { Context } from "./context";
 const ProfilePicture = styled.img`
   width: 60%;
   border-radius: 50%;
@@ -61,11 +62,12 @@ const LogoutIcon = styled.img`
  }
 `; 
 
-export default function Sidebar(props){
-  
+export default function Sidebar(){
+  const {state: {username}, dispatch} = useContext(Context);
+
   const logout = () => {
     localStorage.removeItem("jwt");
-    props.setUsername("");
+    dispatch({type: "USERNAME", payload: ""});
   }
 
   
@@ -73,7 +75,7 @@ export default function Sidebar(props){
  return(
    <StyledSidebar>
       <div>
-        <ProfilePicture src={`https://api.multiavatar.com/${props.username}.svg?apiKey=7UHNFoPLjsVJCi`}/>
+        <ProfilePicture src={`https://api.multiavatar.com/${username}.svg?apiKey=7UHNFoPLjsVJCi`}/>
         <p>Profile</p>
       </div>
       <LogoutIcon src="./public/logout-icon.svg" onClick={logout}/>

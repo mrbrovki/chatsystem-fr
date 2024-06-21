@@ -1,13 +1,14 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import { getAuthHeader } from './utils';
 import styled, { css } from 'styled-components';
+import ChatItem from './ChatItem';
+import { Context } from './context';
 
 const StyledChat = styled.div`
  flex: 8;
  
-
  & > section{
   gap: 10px;
   padding: 20px 16px 80px 16px;
@@ -17,6 +18,14 @@ const StyledChat = styled.div`
   height: calc(100% - 70px);
  }
  
+`;
+
+const StyledChatItem = styled.div`
+  padding: 10px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    gap: 10px;
 `;
 
 const StyledMessage = styled.div`
@@ -63,6 +72,7 @@ const StyledSend = styled.div`
 `;
 
 export default function OpenChat(props) {
+  const {state: {username}} = useContext(Context);
  const messageInput = useRef(null);
 
  const onMessageChange = (e) => {
@@ -85,7 +95,7 @@ export default function OpenChat(props) {
     props.setMessages(messages => [...messages, {
       message: messageInput.current, 
       timestamp: Date.now(), 
-      senderName: props.username
+      senderName: username
     }]);
   }
 
@@ -101,7 +111,9 @@ export default function OpenChat(props) {
   return (
     <StyledChat>
       <section>
-        <div>{props.currentChat.chat}</div>
+        <StyledChatItem>
+          <ChatItem chat={{name: props.currentChat.chat}} />
+        </StyledChatItem>
 
       {props.messages?.map((messageObj) => {
         return (

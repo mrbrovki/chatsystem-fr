@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import {getAuthHeader} from "./utils";
 import styled from "styled-components";
+import ChatItem from "./ChatItem";
 
 const StyledUserChats = styled.div`
   background-color: #fff;
@@ -23,11 +24,6 @@ const StyledUserChats = styled.div`
 
 `;
 
-const StyledAvatar = styled.img`
-  box-shadow: 0 0 2px #00000072;
-  border-radius: 48px;
-  float: left;
-`;
 
 
 export default function UserChats(props){
@@ -53,15 +49,11 @@ export default function UserChats(props){
 
  return(<StyledUserChats>
    {chats.map(chat => { 
-    const defaultURL = `https://api.multiavatar.com/${chat.name}.svg`;
-    let avatarURL = chat.avatar || defaultURL;
-
     return(
       <div key={chat.name} onClick={onChatClick} 
         data-type={chat.type} 
         data-id={chat.id}>
-         <StyledAvatar src={`${avatarURL}?apiKey=${process.env.AVATAR_API}`} height={48} width={48} />
-         <div>{chat.name}</div>
+         <ChatItem chat={chat}/>
       </div>)})}
  </StyledUserChats>);
 }

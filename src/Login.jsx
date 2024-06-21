@@ -1,10 +1,13 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { getAuthHeader } from "./utils";
+import { Context } from "./context";
 
-export default function Login(props){
+export default function Login(){
+const {dispatch} = useContext(Context);
+
 const [formData, setFormData] = useState({ username: "user1@example.com", password: "1234" });
 
 const login = async (e) => {
@@ -20,9 +23,8 @@ const login = async (e) => {
 
   let token = (await response.json()).accessToken;
   localStorage.setItem("jwt", token);
-  
-  // eslint-disable-next-line react/prop-types
-  props.setUsername(formData.username);
+    console.log("here")
+  dispatch({type: "USERNAME", payload: formData.username});
 }
 
 const handleChange = (e) => {
@@ -35,10 +37,11 @@ const authenticate = async () => {
   if(token){
     const URL = 'http://localhost:8080/api/v2/users';
     let username = await (await fetch(URL, {headers: getAuthHeader()})).text();
-    props.setUsername(username);
+    dispatch({type: "USERNAME", payload: username});
   }
 }
-  authenticate();
+
+  console.log("trigger")
  return (
   <>
   <form id="login" name="login">
