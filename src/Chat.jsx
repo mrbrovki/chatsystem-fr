@@ -7,31 +7,10 @@ import { Client } from "@stomp/stompjs";
 import UserChats from "./UserChats";
 import {getAuthHeader} from "./utils";
 import styled from "styled-components";
-import { createGlobalStyle } from 'styled-components';
 import Sidebar from "./Sidebar";
 import OpenChat from "./OpenChat";
 import { Context } from "./context";
 
-const GlobalStyles = createGlobalStyle`
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-  body,
-  html,
-  * {
-    margin: 0;
-    padding: 0;
-    font-family: "Quicksand", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 700;
-    font-style: normal;
-  }
-  p{
-    
-  }
-`;
 
 const StyledMain = styled.main`
   width: 100%;
@@ -139,7 +118,6 @@ export default function Chat(){
 
  return(
   <>
-    <GlobalStyles />
     <StyledMain>
       <Sidebar />
       <UserChats />
