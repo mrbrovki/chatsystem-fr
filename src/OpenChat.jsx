@@ -72,7 +72,7 @@ const StyledSend = styled.div`
 `;
 
 export default function OpenChat(props) {
-  const {state: {username}} = useContext(Context);
+  const {state: {username, currentChat}} = useContext(Context);
  const messageInput = useRef(null);
 
  const onMessageChange = (e) => {
@@ -81,14 +81,14 @@ export default function OpenChat(props) {
 
   const handleSend = () => {
     let URL;
-    if(["Elon Musk", "Jeff Bezos", "Michael Jackson"].includes(props.currentChat.chat)){
+    if(["Elon Musk", "Jeff Bezos", "Michael Jackson"].includes(currentChat.chat)){
       URL = "/app/chat.sendToBot"
     }else{
       URL = "/app/chat.sendMessage";
     }
     props.stompClient.current.publish({
       destination: URL,
-      body: JSON.stringify({message: messageInput.current, type: props.currentChat.type, receiverName: props.currentChat.chat}),
+      body: JSON.stringify({message: messageInput.current, type: currentChat.type, receiverName: currentChat.chat}),
       headers: getAuthHeader(),
     });
     
@@ -112,12 +112,12 @@ export default function OpenChat(props) {
     <StyledChat>
       <section>
         <StyledChatItem>
-          <ChatItem chat={{name: props.currentChat.chat}} />
+          <ChatItem chat={{name: currentChat.chat}} />
         </StyledChatItem>
 
       {props.messages?.map((messageObj) => {
         return (
-          <StyledMessage key={messageObj.senderName + messageObj.timestamp} $isSender={messageObj.senderName != props.currentChat.chat}>
+          <StyledMessage key={messageObj.senderName + messageObj.timestamp} $isSender={messageObj.senderName != currentChat.chat}>
             
             <div>{messageObj.message}</div>
           </StyledMessage>);

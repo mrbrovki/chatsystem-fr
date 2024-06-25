@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {getAuthHeader} from "./utils";
 import styled from "styled-components";
 import ChatItem from "./ChatItem";
+import { Context } from "./context";
 
 const StyledUserChats = styled.div`
   background-color: #fff;
@@ -26,15 +27,15 @@ const StyledUserChats = styled.div`
 
 
 
-export default function UserChats(props){
+export default function UserChats(){
  const [chats, setChats] = useState([]);
- 
+ const {dispatch} = useContext(Context);
 
  const onChatClick = (e) => {
   if(e.currentTarget.getAttribute("data-type") == "GROUP"){
-    props.setCurrentChat({chat: e.currentTarget.getAttribute("data-id"), type: "GROUP"});
+    dispatch({type: "CURRENT_CHAT", payload: {chat: e.currentTarget.getAttribute("data-id"), type: "GROUP"}});
   }else{
-    props.setCurrentChat({chat: e.currentTarget.textContent, type: "PRIVATE"});
+    dispatch({type: "CURRENT_CHAT", payload: {chat: e.currentTarget.textContent, type: "PRIVATE"}});
   }
  }
 

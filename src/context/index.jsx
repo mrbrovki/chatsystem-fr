@@ -1,13 +1,15 @@
-import { createContext, useReducer } from "react";
+import { act, createContext, useReducer } from "react";
 
-const initState = {username: ""};
+const initState = {username: "", currentChat: {chat: null, type: null}};
 
 const reducer = (state, action) => {
   switch (action.type) {
-   case "USERNAME": 
-    return {...state, username: action.payload};
-   default:
-   return state;
+    case "USERNAME": 
+      return {...state, username: action.payload};
+    case "CURRENT_CHAT":
+      return {...state, currentChat: action.payload};
+    default:
+      return state;
   }
 }
 

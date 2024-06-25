@@ -142,8 +142,8 @@ export default function Chat(){
     <GlobalStyles />
     <StyledMain>
       <Sidebar />
-      <UserChats setCurrentChat={setCurrentChat}/>
-      <OpenChat stompClient={stompClientRef} currentChat={currentChat} messages={messages} setMessages={setMessages} />
+      <UserChats />
+      <OpenChat stompClient={stompClientRef} messages={messages} setMessages={setMessages} />
     </StyledMain>
    </>
  );
