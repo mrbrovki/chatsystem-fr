@@ -1,10 +1,11 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import InputField from "./auth/InputField";
 import { useEffect, useState } from "react";
 import { StyledButton, StyledForm } from "./Login";
 
 const StyleSignup = styled.div`
   background-color: #ffffff;
+  position: relative;
 
   & > div{
     text-align: center;
@@ -19,12 +20,32 @@ const StyleSignup = styled.div`
     }
   }
 `;
+
+const StyledCheck = styled.img`
+  position: absolute;
+  align-self: center;
+  ${props => {
+    if(props.$isChecked){
+      return css`
+        width: 200px;
+        height: 200px;
+        transition: all 0.3s;
+      `;
+    }else{
+      return css`
+        width: 0;
+        height: 0;
+      `;
+    }
+  }}
+  
+`;
+
 const Signup = ({setMode}) => {
   const [formData, setFormData] = useState({username: "", email: "", 
     password: "", confirmedPassword: ""});
   const [isDisabled, setIsDisabled] = useState(true);
-
-  const [isPasswordMatch, setIsPasswordMatch] = useState(true);
+  const [isChecked, setIsChecked] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,8 +60,24 @@ const Signup = ({setMode}) => {
     }
   }, [formData]);
 
-  const signup = (e) => {
+  const signup = async (e) => {
     e.preventDefault();
+    const SIGNUP_URL = "http://localhost:8080/api/v3/auth/signup";
+    const {username, email, password} = formData;
+    const response = await fetch(SIGNUP_URL, {
+      method: "POST",
+      body: JSON.stringify({ username, email, password }),
+      headers: {
+      "Content-Type": "application/json"
+      }
+    });
+    if(response.ok){
+        setIsChecked(true);
+      setTimeout(() => {
+        setMode("LOGIN");
+        setIsChecked(false);
+      }, 1000);
+    }
   }
 
  return(
@@ -66,7 +103,8 @@ const Signup = ({setMode}) => {
 
     <StyledButton type="submit" onClick={signup} $isDisabled={isDisabled} $isDark>Signup</StyledButton>
     </StyledForm>
-    <p>Don't have an account? <span onClick={()=>{setMode("LOGIN")}}>Signup</span></p>
+    <p>Already registered? <span onClick={()=>{setMode("LOGIN")}}>Login</span></p>
+    <StyledCheck src="./public/check-icon.svg" $isChecked={isChecked} />
   </StyleSignup>
  );
 }

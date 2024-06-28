@@ -106,7 +106,6 @@ export default function OpenChat(props) {
       
     }
   }
-  console.log(props.messages)
 
   return (
     <StyledChat>

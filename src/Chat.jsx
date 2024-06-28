@@ -5,11 +5,12 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
 import UserChats from "./UserChats";
-import {getAuthHeader} from "./utils";
+import {fetchChats, getAuthHeader} from "./utils";
 import styled from "styled-components";
 import Sidebar from "./Sidebar";
 import OpenChat from "./OpenChat";
 import { Context } from "./context";
+import Panel from "./Panel";
 
 
 const StyledMain = styled.main`
@@ -32,10 +33,9 @@ const StyledMain = styled.main`
 
 
 export default function Chat(){
-  const {state: {username}} = useContext(Context);
+  const {state: {username, currentChat, chats}, dispatch} = useContext(Context);
 
   const [messages, setMessages] = useState([]);
-  const [currentChat, setCurrentChat] = useState({chat: "", type: ""});
 
   const currentChatRef = useRef(null);
   const stompClientRef = useRef(null);
@@ -66,7 +66,6 @@ export default function Chat(){
       ...getAuthHeader(),
     }});
     let chats = await response.json();
-    console.log(chats)
     chats.forEach(chat => {
       let type = chat.type;
       if(type == "GROUP"){
@@ -88,28 +87,32 @@ export default function Chat(){
 
   const onPrivateMessageReceived = (messageObj) => {
     const message = JSON.parse(messageObj.body);
-    console.log(currentChatRef.current)
     if(currentChatRef.current == message.senderName){
       setMessages(messages => [...messages, message]);
     }else{
       alert(message.senderName + " sent a new message!");
+      if(chats.includes(chat=>chat.chat !== message.senderName)){
+        dispatch({type: "CHATS", payload: fetchChats()});
+      }
     }
   }
 
-
-
- useEffect(()=>{
-  (async () => {
-    if(currentChat == null) return; 
-    let messagesURL = "http://localhost:8080/api/v2/messages/";
+  const fetchMessages = async () => {
+     let messagesURL = "http://localhost:8080/api/v2/messages/";
     messagesURL += currentChat.type == "GROUP" ? "groups/"+currentChat.chat : currentChat.chat;
       const data = await(await fetch(messagesURL, {
         method: 'GET', 
         headers: {'Content-Type': 'application/json', 
         ...getAuthHeader()}})).json();
-      setMessages(data);
       currentChatRef.current = currentChat.chat;
-  })();
+      setMessages(data);
+  }
+
+
+
+ useEffect(()=>{
+  if(!currentChat.chat) return;
+  fetchMessages();
  }, [currentChat]);
 
  useEffect(()=>{
@@ -120,7 +123,7 @@ export default function Chat(){
   <>
     <StyledMain>
       <Sidebar />
-      <UserChats />
+      <Panel />
       <OpenChat stompClient={stompClientRef} messages={messages} setMessages={setMessages} />
     </StyledMain>
    </>

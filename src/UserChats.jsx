@@ -1,20 +1,30 @@
 /* eslint-disable react/prop-types */
-import { useContext, useEffect, useState } from "react";
-import {getAuthHeader} from "./utils";
+import { useContext, useEffect, useRef, useState } from "react";
+import {getAuthHeader, fetchChats} from "./utils";
 import styled from "styled-components";
 import ChatItem from "./ChatItem";
 import { Context } from "./context";
 
 const StyledUserChats = styled.div`
-  background-color: #fff;
-  flex: 3;
-  
+  padding: 20px;
+
+  & > h1{
+    font-weight: 700;
+    float: left;
+  }
+  & > img{
+    float: right;
+  }
+`;
+
+const StyledChats = styled.div`
   & > div{
-    padding: 10px;
+    clear: both;
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
     gap: 10px;
+    padding: 10px 0;
 
     &:hover{
       box-shadow: 0 0 2px #0000002e;
@@ -22,14 +32,10 @@ const StyledUserChats = styled.div`
       cursor: pointer;
     }
   }
-
 `;
 
-
-
 export default function UserChats(){
- const [chats, setChats] = useState([]);
- const {dispatch} = useContext(Context);
+ const {state: {chats}, dispatch} = useContext(Context);
 
  const onChatClick = (e) => {
   if(e.currentTarget.getAttribute("data-type") == "GROUP"){
@@ -39,22 +45,32 @@ export default function UserChats(){
   }
  }
 
- useEffect(() => {(async function(){
-  const CHATS_URL = "http://localhost:8080/api/v3/chats";
-   const response = await fetch(CHATS_URL, 
-    {method: 'GET', headers:  getAuthHeader()});
-   const chats = await response.json();
-   setChats(chats);
- })()}, []);
+ useEffect(()=>{
+  (async () => {
+    let chats = await fetchChats();
+    dispatch({type: "CHATS", payload: chats});
+  })();
+ }, []);
 
 
- return(<StyledUserChats>
-   {chats.map(chat => { 
+ const switchToCreateMode = () => {
+  dispatch({type: "PANEL_MODE", payload: "CREATE_CHAT"});
+ }
+
+ 
+ return(
+  <StyledUserChats>
+  <h1>Chat</h1>
+  <img src="./public/edit-icon.svg" width={30} height={30} onClick={switchToCreateMode}/>
+    <StyledChats>
+      {chats.map(chat => { 
     return(
       <div key={chat.name} onClick={onChatClick} 
         data-type={chat.type} 
         data-id={chat.id}>
          <ChatItem chat={chat}/>
       </div>)})}
- </StyledUserChats>);
+    </StyledChats>
+  </StyledUserChats>
+);
 }

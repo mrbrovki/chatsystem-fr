@@ -70,7 +70,7 @@ const [formData, setFormData] = useState({ username: "user1@example.com", passwo
 
 const login = async (e) => {
  e.preventDefault();
- const URL = 'http://localhost:8080/api/v2/auth/login';
+ const URL = 'http://localhost:8080/api/v3/auth/login';
  let response = await fetch(URL, {
         method: 'POST',
         headers: {
@@ -81,7 +81,6 @@ const login = async (e) => {
 
   let token = (await response.json()).accessToken;
   localStorage.setItem("jwt", token);
-    console.log("here")
   dispatch({type: "USERNAME", payload: formData.username});
 }
 
@@ -90,14 +89,6 @@ const handleChange = (e) => {
   setFormData({ ...formData, [name]: value });
 };
 
-const authenticate = async () => {
-  const token = localStorage.getItem("jwt");
-  if(token){
-    const URL = 'http://localhost:8080/api/v2/users';
-    let username = await (await fetch(URL, {headers: getAuthHeader()})).text();
-    dispatch({type: "USERNAME", payload: username});
-  }
-}
 
  return (
   <StyledLogin>

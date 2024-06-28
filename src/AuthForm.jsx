@@ -1,7 +1,9 @@
 import styled, { css } from "styled-components";
 import Login from "./Login";
 import Signup from "./Signup";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { Context } from "./context";
+import { getAuthHeader } from "./utils";
 
 const StyledAuth = styled.main`
  background-color: grey;
@@ -48,7 +50,20 @@ background: linear-gradient(to top, #43A5DC, #FF7BAC);;
 
 const AuthForm = () => {
  const [mode, setMode] = useState("LOGIN");
+  const {dispatch} = useContext(Context);
 
+ const authenticate = async () => {
+  const token = localStorage.getItem("jwt");
+  if(token){
+    const URL = 'http://localhost:8080/api/v2/users';
+    let username = await (await fetch(URL, {headers: getAuthHeader()})).text();
+    dispatch({type: "USERNAME", payload: username});
+  }
+}
+  useEffect(()=>{
+    authenticate()
+  },[]);
+  
  return(
   <StyledAuth>
    <Login setMode={setMode}/>
