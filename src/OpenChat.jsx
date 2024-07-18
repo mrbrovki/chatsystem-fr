@@ -111,7 +111,7 @@ export default function OpenChat(props) {
     <StyledChat>
       <section>
         <StyledChatItem>
-          <ChatItem chat={{name: currentChat.chat}} />
+          <ChatItem chat={{name: currentChat.chat}} handleClick={()=>{}}/>
         </StyledChatItem>
 
       {props.messages?.map((messageObj) => {

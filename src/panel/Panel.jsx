@@ -3,7 +3,8 @@ import UserChats from "./UserChats";
 import CreateChat from "./CreateChat";
 import EditProfile from "./EditProfile";
 import styled from "styled-components";
-import { Context } from "./context";
+import { Context } from "../context";
+import CreateGroup from "./CreateGroup";
 
 const StyledPanel = styled.div`
   background-color: #fff;
@@ -21,9 +22,15 @@ const Panel = () => {
   case "CREATE_CHAT":
    panel = <CreateChat />
    break;
+   case "CREATE_CHAT":
+   panel = <CreateChat />
+   break;
   case "EDIT_PROFILE":
    panel = <EditProfile />
    break;
+   case "CREATE_GROUP":
+    panel = <CreateGroup />
+    break;
    default: 
    panel = <UserChats />
    break;

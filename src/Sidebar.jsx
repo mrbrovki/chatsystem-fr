@@ -67,7 +67,7 @@ export default function Sidebar(){
 
   const logout = () => {
     localStorage.removeItem("jwt");
-    dispatch({type: "USERNAME", payload: ""});
+    dispatch({type: "RESET"});
   }
 
   

@@ -4,13 +4,13 @@
 /* eslint-disable react/prop-types */
 import { useContext, useEffect, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
-import UserChats from "./UserChats";
+import UserChats from "./panel/UserChats";
 import {fetchChats, getAuthHeader} from "./utils";
 import styled from "styled-components";
 import Sidebar from "./Sidebar";
 import OpenChat from "./OpenChat";
 import { Context } from "./context";
-import Panel from "./Panel";
+import Panel from "./panel/Panel";
 
 
 const StyledMain = styled.main`
@@ -87,12 +87,18 @@ export default function Chat(){
 
   const onPrivateMessageReceived = (messageObj) => {
     const message = JSON.parse(messageObj.body);
+    console.log(chats)
     if(currentChatRef.current == message.senderName){
       setMessages(messages => [...messages, message]);
     }else{
       alert(message.senderName + " sent a new message!");
-      if(chats.includes(chat=>chat.chat !== message.senderName)){
-        dispatch({type: "CHATS", payload: fetchChats()});
+      if(!chats.some(chat=>{
+        return chat.name === message.senderName;
+      })){
+        fetchChats().then(chats => {
+          console.log(chats)
+          dispatch({type: "CHATS", payload: chats});
+        });
       }
     }
   }

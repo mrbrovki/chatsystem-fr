@@ -1,9 +1,9 @@
 /* eslint-disable react/prop-types */
 import { useContext, useEffect, useRef, useState } from "react";
-import {getAuthHeader, fetchChats} from "./utils";
+import {fetchChats} from "../utils";
 import styled from "styled-components";
-import ChatItem from "./ChatItem";
-import { Context } from "./context";
+import ChatItem from "../ChatItem";
+import { Context } from "../context";
 
 const StyledUserChats = styled.div`
   padding: 20px;
@@ -37,7 +37,7 @@ const StyledChats = styled.div`
 export default function UserChats(){
  const {state: {chats}, dispatch} = useContext(Context);
 
- const onChatClick = (e) => {
+ const handleClick = (e) => {
   if(e.currentTarget.getAttribute("data-type") == "GROUP"){
     dispatch({type: "CURRENT_CHAT", payload: {chat: e.currentTarget.getAttribute("data-id"), type: "GROUP"}});
   }else{
@@ -56,7 +56,6 @@ export default function UserChats(){
  const switchToCreateMode = () => {
   dispatch({type: "PANEL_MODE", payload: "CREATE_CHAT"});
  }
-
  
  return(
   <StyledUserChats>
@@ -65,11 +64,9 @@ export default function UserChats(){
     <StyledChats>
       {chats.map(chat => { 
     return(
-      <div key={chat.name} onClick={onChatClick} 
+         <ChatItem key={chat.name} handleClick={handleClick} 
         data-type={chat.type} 
-        data-id={chat.id}>
-         <ChatItem chat={chat}/>
-      </div>)})}
+        data-id={chat.id} chat={chat}/>)})}
     </StyledChats>
   </StyledUserChats>
 );

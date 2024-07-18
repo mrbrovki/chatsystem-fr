@@ -13,6 +13,8 @@ const reducer = (state, action) => {
     }
     case "PANEL_MODE":
       return {...state, panelMode: action.payload};
+    case "RESET":
+      return initState;
     default:
       return state;
   }

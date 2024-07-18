@@ -1,9 +1,11 @@
-import { useContext, useRef } from "react";
-import { Context } from "./context";
-import { fetchChats, getAuthHeader } from "./utils";
+import { useContext, useRef, useState } from "react";
+import { Context } from "../context";
+import { fetchChats, getAuthHeader } from "../utils";
 
 const CreateChat = () => {
  const {dispatch} = useContext(Context);
+ 
+
  const newUserRef = useRef(null);
 
  const addNewFriend = async () => {
@@ -18,12 +20,18 @@ const CreateChat = () => {
   dispatch({type: "PANEL_MODE", payload: "USER_CHATS"});
  }
 
+ const createGroup = () => {
+  dispatch({type: "PANEL_MODE", payload: "CREATE_GROUP"});
+}
+
  return(<>
       <span>
+        <img src="./public/group-icon.svg" width={30} height={30} onClick={createGroup}/>
+        <span>Create Group</span>
       <input type="text" placeholder="enter user here" id="add-new-friend" name="newFriend" ref={newUserRef}/>
       <button onClick={addNewFriend}>add new friend</button>
     </span>
-
+    
  </>);
 }
 export default CreateChat;

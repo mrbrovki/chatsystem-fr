@@ -58,7 +58,6 @@ const InputField = (props) => {
     <input type={type} id={props.id} name={props.name} 
     placeholder={props.placeholder} onChange={props.handleChange} autoComplete={props.autoComplete}/>
    {props.isPassword && eyeIcon}
-
  </StyledInput>
  );
 };
