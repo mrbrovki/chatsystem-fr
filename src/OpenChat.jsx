@@ -5,10 +5,13 @@ import { getAuthHeader } from './utils';
 import styled, { css } from 'styled-components';
 import ChatItem from './ChatItem';
 import { Context } from './context';
+import { StyledLogoContainer } from './AuthForm';
 
 const StyledChat = styled.div`
- flex: 8;
- 
+ flex: ${props => props.$isFocused? 8 : 4};
+ opacity: ${props => props.$isFocused? 1 : 0.3};
+ transition: all 0.3s;
+
  & > section{
   gap: 10px;
   padding: 20px 16px 80px 16px;
@@ -72,7 +75,7 @@ const StyledSend = styled.div`
 `;
 
 export default function OpenChat(props) {
-  const {state: {username, currentChat}} = useContext(Context);
+  const {state: {username, currentChat, panelMode}, dispatch} = useContext(Context);
  const messageInput = useRef(null);
 
  const onMessageChange = (e) => {
@@ -81,14 +84,14 @@ export default function OpenChat(props) {
 
   const handleSend = () => {
     let URL;
-    if(["Elon Musk", "Jeff Bezos", "Michael Jackson"].includes(currentChat.chat)){
+    if(["Elon Musk", "Jeff Bezos", "Michael Jackson"].includes(currentChat.name)){
       URL = "/app/chat.sendToBot"
     }else{
       URL = "/app/chat.sendMessage";
     }
     props.stompClient.current.publish({
       destination: URL,
-      body: JSON.stringify({message: messageInput.current, type: currentChat.type, receiverName: currentChat.chat}),
+      body: JSON.stringify({message: messageInput.current, type: currentChat.type, receiverName: currentChat.name}),
       headers: getAuthHeader(),
     });
     
@@ -107,16 +110,20 @@ export default function OpenChat(props) {
     }
   }
 
+  const onChatFocus = () => {
+    dispatch({type: "PANEL_MODE", payload: "USER_CHATS"});
+  }
+
   return (
-    <StyledChat>
+    <StyledChat $isFocused={panelMode === "USER_CHATS"} onClick={onChatFocus}>
       <section>
         <StyledChatItem>
-          <ChatItem chat={{name: currentChat.chat}} handleClick={()=>{}}/>
+          <ChatItem chat={{name: currentChat.name}} handleClick={()=>{}}/>
         </StyledChatItem>
 
       {props.messages?.map((messageObj) => {
         return (
-          <StyledMessage key={messageObj.senderName + messageObj.timestamp} $isSender={messageObj.senderName != currentChat.chat}>
+          <StyledMessage key={messageObj.senderName + messageObj.timestamp} $isSender={messageObj.senderName != currentChat.name}>
             
             <div>{messageObj.message}</div>
           </StyledMessage>);

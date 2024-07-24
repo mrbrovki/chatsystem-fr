@@ -2,13 +2,30 @@ import { useContext } from "react";
 import UserChats from "./UserChats";
 import CreateChat from "./CreateChat";
 import EditProfile from "./EditProfile";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Context } from "../context";
 import CreateGroup from "./CreateGroup";
 
 const StyledPanel = styled.div`
   background-color: #fff;
+  padding: 2rem;
   flex: 3;
+`;
+
+export const StyledPanelButton = styled.button`
+  background: transparent; 
+  border: none; 
+  cursor: pointer;
+  color: ${props => props.$color};
+  font-size: 1rem;
+  display: block;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  
+  &:hover{
+    color: #2c6c90;
+  }
 `;
 
 const Panel = () => {
@@ -20,9 +37,6 @@ const Panel = () => {
    panel = <UserChats />
    break;
   case "CREATE_CHAT":
-   panel = <CreateChat />
-   break;
-   case "CREATE_CHAT":
    panel = <CreateChat />
    break;
   case "EDIT_PROFILE":

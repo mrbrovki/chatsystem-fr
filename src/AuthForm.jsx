@@ -23,7 +23,7 @@ const StyledAuth = styled.main`
  }
 `;
 
-const StyledLogoContainer = styled.div`
+export const StyledLogoContainer = styled.div`
 background: linear-gradient(to top, #43A5DC, #FF7BAC);;
  position: absolute;
  height: 100%;

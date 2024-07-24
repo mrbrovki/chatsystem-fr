@@ -1,6 +1,6 @@
 import { act, createContext, useReducer } from "react";
 
-const initState = {username: "", currentChat: {chat: null, type: null}, chats: [], panelMode: "USER_CHATS"};
+const initState = {username: "", currentChat: {name: null, type: null}, chats: [], panelMode: "USER_CHATS"};
 
 const reducer = (state, action) => {
   switch (action.type) {

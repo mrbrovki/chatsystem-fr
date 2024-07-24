@@ -2,16 +2,23 @@ import { useContext, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import ChatItem from "../ChatItem";
+import InputField from "../auth/InputField";
+import { getAuthHeader } from "../utils";
+import { StyledPanelButton } from "./Panel";
 
 const StyledUserChats = styled.div`
-  padding: 20px;
-
   & > h1{
     font-weight: 700;
     float: left;
   }
   & > img{
     float: right;
+  }
+
+  div{
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
   }
 `;
 
@@ -23,31 +30,64 @@ const StyledChats = styled.div`
     align-items: center;
     gap: 10px;
     padding: 10px 0;
-
-    &:hover{
-      box-shadow: 0 0 2px #0000002e;
-      border-radius: 20px;
-      cursor: pointer;
-    }
   }
 `;
 
+
 const CreateGroup = () => {
- const [groupData, setGroupData] = useState({name: ""});
+ const [groupData, setGroupData] = useState({name: "", memberNames: []});
  const {state: {chats}, dispatch} = useContext(Context);
-  const [users, setUsers] = useState([]);
 
  const handleChange = (e) => {
-  const { name, value } = e.target;
-  setGroupData(groupData => ({ ...groupData, [name]: value }));
+  const { value } = e.target;
+  setGroupData(groupData => ({ ...groupData, name: value }));
 };
   const handleClick = (e) =>{
-    console.log(e.currentTarget.getAttribute("data-name"));
-    e.currentTarget
+    const currentUser = e.currentTarget.getAttribute("data-name");
+    setGroupData(groupData => {
+      if(groupData.memberNames.includes(currentUser)){
+        return {...groupData, 
+          memberNames: groupData.memberNames.filter((username => username != currentUser))}
+      }else{
+        return {...groupData, memberNames: [...groupData.memberNames, currentUser]}
+      }
+    });
   }
+
+  const submitGroup = async (e) => {
+    e.preventDefault();
+    console.log(groupData);
+    const URL = 'http://localhost:8080/api/v3/chats/groups';
+    let response = await fetch(URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader(),
+        },
+        body: JSON.stringify(groupData)
+    });
+
+  let groupChat = await response.json();
+  console.log(groupChat);  
+  }
+
+  const back = () => {
+    dispatch({type: "PANEL_MODE", payload: "CREATE_CHAT"});
+  }
+
  return(
   <>
     <StyledUserChats>
+      <div>
+        <StyledPanelButton type="submit" onClick={back} $color="#43A5DC" $hoverColor="#194b68">
+        back
+      </StyledPanelButton>
+      <StyledPanelButton type="submit" onClick={submitGroup} $color="#43A5DC" $hoverColor="#194b68">create group</StyledPanelButton>
+      </div>
+      <InputField type="text" label="group name" name="group-name"
+    placeholder="Group name..." id="create-group-name"
+    handleChange={handleChange} autoComplete="off"/>
+  
     <StyledChats>
       {chats.map(chat => { 
     return(

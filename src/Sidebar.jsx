@@ -70,12 +70,15 @@ export default function Sidebar(){
     dispatch({type: "RESET"});
   }
 
+  const onLogoClick = () => {
+    dispatch({type: "PANEL_MODE", payload: "USER_CHATS"});
+  }
   
 
  return(
    <StyledSidebar>
       <div>
-        <ProfilePicture src={`https://api.multiavatar.com/${username}.svg?apiKey=7UHNFoPLjsVJCi`}/>
+        <ProfilePicture src={`https://api.multiavatar.com/${username}.svg?apiKey=7UHNFoPLjsVJCi`} onClick={onLogoClick}/>
         <p>Profile</p>
       </div>
       <LogoutIcon src="./public/logout-icon.svg" onClick={logout}/>

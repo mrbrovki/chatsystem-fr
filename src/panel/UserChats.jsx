@@ -6,8 +6,6 @@ import ChatItem from "../ChatItem";
 import { Context } from "../context";
 
 const StyledUserChats = styled.div`
-  padding: 20px;
-
   & > h1{
     font-weight: 700;
     float: left;
@@ -49,6 +47,7 @@ export default function UserChats(){
   (async () => {
     let chats = await fetchChats();
     dispatch({type: "CHATS", payload: chats});
+    dispatch({type: "CURRENT_CHAT", payload: chats[0]})
   })();
  }, []);
 

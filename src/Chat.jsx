@@ -105,19 +105,19 @@ export default function Chat(){
 
   const fetchMessages = async () => {
      let messagesURL = "http://localhost:8080/api/v2/messages/";
-    messagesURL += currentChat.type == "GROUP" ? "groups/"+currentChat.chat : currentChat.chat;
+    messagesURL += currentChat.type == "GROUP" ? "groups/"+currentChat.name : currentChat.name;
       const data = await(await fetch(messagesURL, {
         method: 'GET', 
         headers: {'Content-Type': 'application/json', 
         ...getAuthHeader()}})).json();
-      currentChatRef.current = currentChat.chat;
+      currentChatRef.current = currentChat.name;
       setMessages(data);
   }
 
 
 
  useEffect(()=>{
-  if(!currentChat.chat) return;
+  if(!currentChat.name) return;
   fetchMessages();
  }, [currentChat]);
 
