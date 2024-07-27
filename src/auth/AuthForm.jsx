@@ -1,9 +1,9 @@
 import styled, { css } from "styled-components";
-import Login from "./Login";
-import Signup from "./Signup";
 import { useContext, useEffect, useState } from "react";
-import { Context } from "./context";
-import { getAuthHeader } from "./utils";
+import { Context } from "../context";
+import { getAuthHeader } from "../utils";
+import Signup from "./Signup";
+import Login from "./Login";
 
 const StyledAuth = styled.main`
  background-color: grey;

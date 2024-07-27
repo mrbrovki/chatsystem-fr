@@ -2,10 +2,9 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
 import { useContext, useState } from "react";
-import { getAuthHeader } from "./utils";
-import { Context } from "./context";
+import { Context } from "../context";
 import styled, { css } from "styled-components";
-import InputField from "./auth/InputField";
+import InputField from "./InputField";
 
 const StyledLogin = styled.div`
   background-color: white;

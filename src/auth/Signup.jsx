@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
-import InputField from "./auth/InputField";
 import { useEffect, useState } from "react";
 import { StyledButton, StyledForm } from "./Login";
+import InputField from "./InputField";
 
 const StyleSignup = styled.div`
   background-color: #ffffff;

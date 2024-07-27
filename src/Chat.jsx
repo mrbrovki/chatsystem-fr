@@ -26,7 +26,7 @@ const StyledMain = styled.main`
 
   & > *{
     height: 95%;
-    border-radius: 20px;
+    border-radius: var(--components-border-radius);
     background-color: #fff;
   }
 `;  

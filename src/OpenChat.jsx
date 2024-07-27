@@ -1,34 +1,38 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import { useContext, useRef, useState } from 'react'
+import { useContext, useRef } from 'react'
 import { getAuthHeader } from './utils';
 import styled, { css } from 'styled-components';
-import ChatItem from './ChatItem';
+import ChatItem, { StyledAvatar } from './ChatItem';
 import { Context } from './context';
-import { StyledLogoContainer } from './AuthForm';
 
 const StyledChat = styled.div`
  flex: ${props => props.$isFocused? 8 : 4};
  opacity: ${props => props.$isFocused? 1 : 0.3};
  transition: all 0.3s;
+  position: relative;
 
  & > section{
   gap: 10px;
+  overflow-y: scroll;
   padding: 20px 16px 80px 16px;
   display: flex;
   flex-flow: column nowrap;
   overflow-y: scroll;
-  height: calc(100% - 70px);
+  height: calc(100% - 160px);
  }
- 
 `;
 
-const StyledChatItem = styled.div`
-  padding: 10px;
+const StyledChatHeader = styled.div`
+    height: 90px;
+    padding: 0 20px;
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
     gap: 10px;
+    border-radius: var(--components-border-radius) var(--components-border-radius) 0 0;
+    background-color: #ffffff;
+    border-bottom: solid 1px #e1e1e1;
 `;
 
 const StyledMessage = styled.div`
@@ -114,13 +118,18 @@ export default function OpenChat(props) {
     dispatch({type: "PANEL_MODE", payload: "USER_CHATS"});
   }
 
+  const defaultURL = `https://api.multiavatar.com/${currentChat.name}.svg`;
+  const avatarURL = currentChat.avatar || defaultURL;
+
   return (
     <StyledChat $isFocused={panelMode === "USER_CHATS"} onClick={onChatFocus}>
-      <section>
-        <StyledChatItem>
-          <ChatItem chat={{name: currentChat.name}} handleClick={()=>{}}/>
-        </StyledChatItem>
+      <StyledChatHeader>
+          <StyledAvatar src={`${avatarURL}?apiKey=${process.env.AVATAR_API}`} />
+          <div>{currentChat.name}</div>
+      </StyledChatHeader>
 
+      <section>
+    
       {props.messages?.map((messageObj) => {
         return (
           <StyledMessage key={messageObj.senderName + messageObj.timestamp} $isSender={messageObj.senderName != currentChat.name}>

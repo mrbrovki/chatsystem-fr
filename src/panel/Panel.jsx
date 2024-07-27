@@ -8,8 +8,11 @@ import CreateGroup from "./CreateGroup";
 
 const StyledPanel = styled.div`
   background-color: #fff;
-  padding: 2rem;
+  padding: 32px;
   flex: 3;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
 `;
 
 export const StyledPanelButton = styled.button`
@@ -24,7 +27,7 @@ export const StyledPanelButton = styled.button`
   align-items: center;
   
   &:hover{
-    color: #2c6c90;
+    color: ${props => props.$hoverColor};
   }
 `;
 

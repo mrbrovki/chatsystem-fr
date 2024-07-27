@@ -1,10 +1,14 @@
 import {useContext } from 'react'
 import Chat from './Chat';
-import AuthForm from './AuthForm';
 import { Context } from './context';
 import { createGlobalStyle } from 'styled-components';
+import AuthForm from './auth/AuthForm';
 
 const GlobalStyles = createGlobalStyle`
+:root {
+    --components-border-radius: 20px;
+  }
+
   *,
   *::before,
   *::after {
