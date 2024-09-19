@@ -1,30 +1,49 @@
-import { ChangeEvent, useContext, useEffect, useRef, useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  fetchChatById,
-  fetchChats,
+  ChangeEvent,
+  DragEvent,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  fetchGroupById,
+  fetchAllChats,
+  fetchFileById,
   fetchMessages,
-  fetchPrivateChats,
-  getAuthHeader,
+  fetchPrivateChatByName,
+  jwtAuthHeader,
 } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
 import {
   ActionType,
-  Chat,
+  Chats,
   ChatType,
   Message,
+  Messages,
   MessageType,
   PanelMode,
-  PrivateChat,
 } from "../context/types";
 import { Client, Message as StompMessage } from "@stomp/stompjs";
 
-const StyledChat = styled.div<{ $isFocused: boolean }>`
+const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
   opacity: ${(props: any) => (props.$isFocused ? 1 : 0.3)};
   transition: all 0.3s;
   position: relative;
+
+  ${({ $isDrag }) => {
+    if ($isDrag) {
+      return css`
+        flex: 9;
+        background-color: #0000009;
+      `;
+    }
+  }}
 
   & > section {
     gap: 10px;
@@ -32,7 +51,6 @@ const StyledChat = styled.div<{ $isFocused: boolean }>`
     padding: 20px 16px 80px 16px;
     display: flex;
     flex-flow: column nowrap;
-    overflow-y: scroll;
     height: calc(100% - 160px);
   }
 `;
@@ -50,26 +68,50 @@ const StyledChatHeader = styled.div`
   border-bottom: solid 1px #e1e1e1;
 `;
 
-const StyledMessage = styled.div<{ $isSender: boolean }>`
+const StyledMessage = styled.div<{ $isSender: boolean; $isImage: boolean }>`
   max-width: 320px;
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 0 8px #00000026;
+  align-self: ${({ $isSender }) => ($isSender ? "flex-end" : "flex-start")};
 
-  ${(props: any) => {
-    if (props.$isSender) {
-      return css`
-        background-color: #43a5dc;
-        color: #fff;
-        align-self: flex-end;
-      `;
-    } else {
-      return css`
-        background-color: #d9d9d9;
-        align-self: flex-start;
-      `;
-    }
-  }}
+  .content {
+    padding: 16px;
+    box-shadow: 0 0 8px #00000042;
+
+    ${({ $isSender }) => {
+      if ($isSender) {
+        return css`
+          border-radius: 20px 20px 0 20px;
+          background-color: #43a5dc;
+          color: #fff;
+        `;
+      } else {
+        return css`
+          border-radius: 20px 20px 20px 0;
+          background-color: #d9d9d9;
+        `;
+      }
+    }}
+
+    ${({ $isImage }) => {
+      if ($isImage) {
+        return css`
+          padding: 0px;
+          overflow: hidden;
+          border-radius: 10px;
+
+          img {
+            width: 100%;
+            display: block;
+          }
+        `;
+      }
+    }}
+  }
+  span {
+    color: #bfbfbf;
+    font-weight: 600;
+    font-size: 12px;
+    float: ${({ $isSender }) => ($isSender ? "right" : "left")};
+  }
 `;
 
 const StyledSend = styled.div`
@@ -77,6 +119,7 @@ const StyledSend = styled.div`
   background-color: #ffffff;
   border-radius: 12px 12px 20px 20px;
   padding: 0 16px 0;
+  position: relative;
 
   & > input {
     background-color: #f7f7f7;
@@ -86,15 +129,31 @@ const StyledSend = styled.div`
     border: none;
     box-shadow: 0 0 8px #00000026;
     border-radius: 12px;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: #00000058;
+    }
   }
-  & > input:focus {
-    outline: none;
+
+  img {
+    position: absolute;
+    right: 24px;
+    top: 8px;
+    fill: black;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 `;
 
 export default function OpenChat() {
   const {
-    state: { username, currentChat, panelMode, privateChats },
+    state: { username, currentChat, panelMode, messages },
     dispatch,
   } = useContext(Context);
   const messageInput = useRef("");
@@ -102,53 +161,44 @@ export default function OpenChat() {
     `https://api.multiavatar.com/default.svg`
   );
   const [name, setName] = useState("");
+  const [content, setContent] = useState<any>([]);
+  const [isDrag, setIsDrag] = useState(false);
 
-  const [messages, setMessages] = useState<Message[]>([]);
   const stompClientRef = useRef<Client | null>(null);
-  const privateChatsRef = useRef<PrivateChat[]>([]);
-  const currentChatRef = useRef<any>(null);
+  const messagesRef = useRef<Messages>();
+  const contentRef = useRef<any>(null);
 
-  const connectToWebsocket = async () => {
-    // @ts-ignore
-    const socket = new SockJS("http://localhost:8080/ws");
+  const connectToWebsocket = (chats: Chats) => {
+    const socket = new WebSocket("ws://localhost:8080/ws");
     const stompClient = new Client({
       webSocketFactory: () => socket,
-      onConnect: async () => {
-        const chats = await fetchChats();
-        privateChatsRef.current = chats.privateChats;
+      onConnect: () => {
         console.log("attempting connect!");
+        //  subscribe to private channel
         stompClient.subscribe(
-          "/user/" + username + "/queue/messages",
+          "/user/" + username + "/private/messages",
           (messageObj) =>
             onPrivateMessageReceived(
-              privateChatsRef.current,
+              stompClient,
               messageObj,
-              currentChatRef.current!
+              messagesRef.current!
             ),
-          getAuthHeader()
+          jwtAuthHeader()
         );
-        dispatch({
-          type: ActionType.PRIVATE_CHATS,
-          payload: chats.privateChats,
-        });
-        dispatch({
-          type: ActionType.GROUP_CHATS,
-          payload: chats.groupChats,
-        });
-        dispatch({
-          type: ActionType.BOT_CHATS,
-          payload: chats.botChats,
-        });
-
-        dispatch({
-          type: ActionType.CURRENT_CHAT,
-          payload: chats.privateChats[0],
-        });
-
-        chats.groupChats.forEach((chat) => {
+        //  subscribe to bot channel
+        stompClient.subscribe(
+          "/user/" + username + "/bot/messages",
+          (messageObj) =>
+            onBotMessageReceived(stompClient, messageObj, messagesRef.current!),
+          jwtAuthHeader()
+        );
+        //  subscribe to group channels
+        chats[ChatType.GROUP].forEach((chat) => {
           const groupId = chat.id;
           subscribeToGroup(stompClient, groupId);
         });
+
+        initChats(chats);
       },
       debug: (str) => {
         console.log(str);
@@ -162,153 +212,296 @@ export default function OpenChat() {
     stompClientRef.current = stompClient;
   };
 
+  const initChats = (chats: Chats) => {
+    dispatch({
+      type: ActionType.PRIVATE_CHATS,
+      payload: chats[ChatType.PRIVATE],
+    });
+    dispatch({
+      type: ActionType.GROUP_CHATS,
+      payload: chats[ChatType.GROUP],
+    });
+    dispatch({
+      type: ActionType.BOT_CHATS,
+      payload: chats[ChatType.BOT],
+    });
+
+    dispatch({
+      type: ActionType.CURRENT_CHAT,
+      payload: chats[ChatType.PRIVATE][0],
+    });
+  };
+
   const subscribeToGroup = async (stompClient: Client, groupId: string) => {
     stompClient.subscribe(
-      "/group/" + groupId + "/queue/messages",
-      (message) => onGroupMessageReceived(message, groupId),
-      getAuthHeader()
+      "/group/" + groupId + "/messages",
+      (messageObj) =>
+        onGroupMessageReceived(
+          stompClient,
+          messageObj,
+          messagesRef.current!,
+          groupId
+        ),
+      jwtAuthHeader()
     );
   };
 
-  const onGroupMessageReceived = (
+  const onBotMessageReceived = async (
+    stompClient: Client,
     messageObj: StompMessage,
+    messages: Messages
+  ) => {
+    if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
+      const message = JSON.parse(messageObj.body) as Message;
+      switch (message.type) {
+        case MessageType.TEXT:
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.BOT,
+              chatName: message.senderName,
+              message: message,
+            },
+          });
+          break;
+      }
+    }
+  };
+
+  const onGroupMessageReceived = (
+    stompClient: Client,
+    messageObj: StompMessage,
+    messages: Messages,
     groupId: string
   ) => {
-    const message = JSON.parse(messageObj.body) as Message;
-    if (currentChat?.type == ChatType.GROUP && currentChat.id == groupId) {
-      setMessages((messages) => [...messages, message]);
+    if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
+      const message = JSON.parse(messageObj.body) as Message;
+      switch (message.type) {
+        case MessageType.TEXT: {
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.GROUP,
+              chatName: groupId,
+              message: message,
+            },
+          });
+          break;
+        }
+      }
     } else {
-      alert(groupId + " has a new message!");
+      handleFileReceive(messageObj, ChatType.GROUP, groupId);
     }
   };
 
   const onPrivateMessageReceived = async (
-    chats: PrivateChat[],
+    stompClient: Client,
     messageObj: StompMessage,
-    currentChat: Chat
+    messages: Messages
   ) => {
-    const message = JSON.parse(messageObj.body) as Message;
-    switch (message.type) {
-      case MessageType.JOIN: {
-        const groupId = message.content;
-        const groupChat = await fetchChatById(groupId);
-        subscribeToGroup(stompClientRef.current!, groupId);
-        dispatch({ type: ActionType.ADD_GROUP_CHAT, payload: groupChat });
-        break;
-      }
-      case MessageType.PRIVATE: {
-        if (
-          currentChat?.type == ChatType.PRIVATE &&
-          currentChat.username == message.senderName
-        ) {
-          setMessages((messages) => [...messages, message]);
-        } else {
-          alert(message.senderName + " sent a new message!");
+    if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
+      const message = JSON.parse(messageObj.body) as Message;
+      switch (message.type) {
+        case MessageType.JOIN: {
+          const groupId = message.content as string;
+          const groupChat = await fetchGroupById(groupId);
+          subscribeToGroup(stompClient, groupId);
+          dispatch({ type: ActionType.ADD_GROUP_CHAT, payload: groupChat });
 
-          if (!chats.some((chat) => chat.username == message.senderName)) {
-            const privateChats = await fetchPrivateChats();
-            const newPrivateChat = privateChats.find(
-              (chat) => chat.username === message.senderName
-            );
-            dispatch({
-              type: ActionType.ADD_PRIVATE_CHAT,
-              payload: newPrivateChat!,
-            });
-          }
+          //join message?
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.BOT,
+              chatName: groupChat.id,
+              message: message,
+            },
+          });
+          break;
         }
-        break;
+        case MessageType.TEXT: {
+          console.log(messages);
+          if (!messages[ChatType.PRIVATE][message.senderName]) {
+            const newChat = await fetchPrivateChatByName(message.senderName);
+            dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
+          }
+
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.PRIVATE,
+              chatName: message.senderName,
+              message: message,
+            },
+          });
+          break;
+        }
       }
+    } else {
+      const senderName = messageObj.headers["sender"];
+      if (!messages[ChatType.PRIVATE][senderName]) {
+        const newChat = await fetchPrivateChatByName(senderName);
+        dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
+      }
+      handleFileReceive(messageObj, ChatType.PRIVATE);
     }
+  };
+
+  const handleFileReceive = (
+    messageObj: StompMessage,
+    chatType: ChatType,
+    chatName?: string
+  ) => {
+    const blob = new Blob([messageObj.binaryBody], {
+      type: messageObj.headers["contentType"],
+    });
+    const senderName = messageObj.headers["sender"];
+    saveFile(blob, senderName, chatType, chatName || senderName);
+  };
+
+  const saveFile = (
+    data: Blob | File,
+    senderName: string,
+    chatType: ChatType,
+    chatName: string
+  ) => {
+    const objectURL = URL.createObjectURL(data);
+    const message = {
+      timestamp: Date.now(),
+      content: objectURL,
+      type: data.type as MessageType,
+      senderName: senderName,
+    };
+    dispatch({
+      type: ActionType.ADD_MESSAGE,
+      payload: {
+        chatType: chatType,
+        chatName: chatName,
+        message: message,
+      },
+    });
   };
 
   const loadMessages = async () => {
-    let endpoint;
-
-    switch (currentChat?.type) {
-      case ChatType.GROUP:
-        endpoint = "groups/" + currentChat.name;
-        break;
-      case ChatType.PRIVATE:
-        endpoint = currentChat.username;
-        break;
-      case ChatType.BOT:
-        endpoint = currentChat.botName;
-        break;
-    }
-
-    const messages = await fetchMessages(endpoint!);
-
-    setMessages(messages);
+    const messages = await fetchMessages();
+    messagesRef.current = messages;
+    dispatch({ type: ActionType.MESSAGES, payload: messages });
   };
 
-  useEffect(() => {
-    if (!currentChat) return;
-    currentChatRef.current = currentChat;
-    loadMessages();
-  }, [currentChat]);
+  const loadFiles = async () => {
+    const messages = messagesRef.current!;
+    for (const key in messages) {
+      const chatType = key as keyof Messages;
 
-  useEffect(() => {
-    privateChatsRef.current = privateChats;
-  }, [privateChats]);
+      for (const id in messages[chatType]) {
+        const chatMessages = messages[chatType][id];
+        const newChatMessages = await Promise.all<Message>(
+          chatMessages.map(async (message) => {
+            if (message.type === MessageType.TEXT) {
+              return message;
+            } else {
+              const params = {
+                chatName: id,
+                chatType: chatType,
+                senderName: message.senderName,
+              };
+              const blob = await fetchFileById(message.content, params);
+              const url = URL.createObjectURL(blob);
+              const newMessage = { ...message, content: url };
+              return newMessage;
+            }
+          })
+        );
 
-  useEffect(() => {
-    connectToWebsocket();
-  }, []);
+        dispatch({
+          type: ActionType.CHAT_MESSAGES,
+          payload: {
+            chatName: id,
+            chatType: chatType,
+            chatMessages: newChatMessages,
+          },
+        });
+      }
+    }
+  };
 
   const onMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
     messageInput.current = e.target.value;
   };
 
-  const handleSend = () => {
-    let URL;
-    if (!stompClientRef.current) return;
-    switch (currentChat?.type) {
+  const handleSend = async () => {
+    if (!stompClientRef.current || !currentChat) return;
+    let url: string;
+    const message = {
+      type: MessageType.TEXT,
+      timestamp: Date.now(),
+      content: messageInput.current,
+      senderName: username,
+    };
+
+    switch (currentChat.type) {
       case ChatType.BOT:
-        URL = "/app/chat.sendToBot";
+        url = "/app/chat.sendToBot";
         stompClientRef.current.publish({
-          destination: URL,
+          destination: url,
           body: JSON.stringify({
-            content: messageInput.current,
-            type: currentChat.type,
+            content: message.content,
+            type: message.type,
             receiverName: currentChat.botName,
           }),
-          headers: getAuthHeader(),
+          headers: jwtAuthHeader(),
+        });
+        dispatch({
+          type: ActionType.ADD_MESSAGE,
+          payload: {
+            chatType: ChatType.BOT,
+            chatName: currentChat.botName,
+            message: message,
+          },
         });
         break;
       case ChatType.GROUP:
-        URL = "/app/chat.sendMessage";
+        url = "/app/chat.sendToGroup";
         stompClientRef.current.publish({
-          destination: URL,
+          destination: url,
           body: JSON.stringify({
-            content: messageInput.current,
-            type: currentChat.type,
+            content: message.content,
+            type: message.type,
             receiverName: currentChat.name,
           }),
-          headers: getAuthHeader(),
+          headers: jwtAuthHeader(),
+        });
+        dispatch({
+          type: ActionType.ADD_MESSAGE,
+          payload: {
+            chatType: ChatType.GROUP,
+            chatName: currentChat.name,
+            message: message,
+          },
         });
         break;
-      case ChatType.PRIVATE:
-        URL = "/app/chat.sendMessage";
+      case ChatType.PRIVATE: {
+        url = "/app/chat.sendToPrivate";
         stompClientRef.current.publish({
-          destination: URL,
+          destination: url,
           body: JSON.stringify({
-            content: messageInput.current,
-            type: currentChat.type,
+            content: message.content,
+            type: message.type,
             receiverName: currentChat.username,
           }),
-          headers: getAuthHeader(),
+          headers: jwtAuthHeader(),
+        });
+        dispatch({
+          type: ActionType.ADD_MESSAGE,
+          payload: {
+            chatType: ChatType.PRIVATE,
+            chatName: currentChat.username,
+            message: message,
+          },
         });
         break;
+      }
     }
-
-    setMessages((messages: any) => [
-      ...messages,
-      {
-        timestamp: Date.now(),
-        content: messageInput.current,
-        senderName: username,
-      },
-    ]);
   };
 
   const handleKeyPress = (e: any) => {
@@ -322,25 +515,151 @@ export default function OpenChat() {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };
 
+  const dragover = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDrag(true);
+  };
+
+  const dragleave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDrag(false);
+  };
+
+  const drop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!currentChat) return;
+    [...e.dataTransfer.files].forEach(async (file, i) => {
+      console.log(`… file[${i}].name = ${file.name}`);
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      let url;
+      let receiverName;
+      switch (currentChat.type) {
+        case ChatType.PRIVATE:
+          url = "/app/chat.sendFileToPrivate";
+          receiverName = currentChat.username;
+          break;
+        case ChatType.BOT:
+          url = "/app/chat.sendFileToBot";
+          receiverName = currentChat.botName;
+          break;
+        case ChatType.GROUP:
+          url = "/app/chat.sendFileToGroup";
+          receiverName = currentChat.id;
+          break;
+      }
+
+      if (!stompClientRef.current) return;
+      stompClientRef.current.publish({
+        destination: url!,
+        binaryBody: buffer,
+        headers: {
+          ...jwtAuthHeader(),
+          "file-type": file.type,
+          "receiver-name": receiverName!,
+          "content-type": "application/octet-stream",
+        },
+      });
+
+      saveFile(file, username, currentChat.type, receiverName);
+    });
+  };
+
   useEffect(() => {
-    switch (currentChat?.type) {
-      case ChatType.GROUP:
-        setImageSrc(currentChat.image);
-        setName(currentChat.name);
-        break;
+    if (!messages || !currentChat) return;
+    let chatMessages;
+    switch (currentChat.type) {
       case ChatType.PRIVATE:
-        setImageSrc(currentChat.avatar);
+        chatMessages = messages[currentChat.type][currentChat.username];
         setName(currentChat.username);
+        setImageSrc(currentChat.avatar);
+        break;
+      case ChatType.GROUP:
+        chatMessages = messages[currentChat.type][currentChat.id];
+        setName(currentChat.name);
+        setImageSrc(currentChat.image);
         break;
       case ChatType.BOT:
-        setImageSrc(currentChat.avatar);
+        chatMessages = messages[currentChat.type][currentChat.botName];
         setName(currentChat.botName);
+        setImageSrc(currentChat.avatar);
         break;
     }
-  }, [currentChat]);
+    chatMessages = chatMessages ? chatMessages : [];
+    const chatContent = chatMessages.map((chatMessage) => {
+      const date = new Date(chatMessage.timestamp);
+      switch (chatMessage.type) {
+        case MessageType.TEXT: {
+          return (
+            <StyledMessage
+              key={chatMessage.senderName + chatMessage.timestamp}
+              $isImage={false}
+              $isSender={chatMessage.senderName === username}
+            >
+              <div className="content">
+                {chatMessage.content.replace("{{user}}", username)}
+              </div>
+              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+            </StyledMessage>
+          );
+        }
+        case MessageType.IMAGE_GIF:
+        case MessageType.IMAGE_JPEG:
+        case MessageType.IMAGE_PNG: {
+          return (
+            <StyledMessage
+              key={chatMessage.senderName + chatMessage.timestamp}
+              $isSender={chatMessage.senderName === username}
+              $isImage={true}
+            >
+              <div className="content">
+                <img src={chatMessage.content} />
+              </div>
+              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+            </StyledMessage>
+          );
+        }
+        case MessageType.APPLICATION_PDF: {
+          return (
+            <StyledMessage
+              key={chatMessage.senderName + chatMessage.timestamp}
+              $isSender={chatMessage.senderName === username}
+              $isImage={false}
+            >
+              <div className="content">
+                <a href={chatMessage.content}>pdf</a>
+              </div>
+              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+            </StyledMessage>
+          );
+        }
+        default:
+          return <></>;
+      }
+    });
+    setContent(chatContent);
+  }, [messages, currentChat]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    (async () => {
+      const chats = await fetchAllChats();
+      connectToWebsocket(chats);
+    })();
+    (async () => {
+      await loadMessages();
+      loadFiles();
+    })();
+  }, []);
 
   return (
     <StyledChat
+      onDragOver={dragover}
+      onDragLeave={dragleave}
+      onDrop={drop}
+      $isDrag={isDrag}
       $isFocused={panelMode === PanelMode.USER_CHATS && currentChat != null}
       onClick={onChatFocus}
     >
@@ -351,18 +670,7 @@ export default function OpenChat() {
         </StyledChatHeader>
       )}
 
-      <section>
-        {messages.map((messageObj: Message) => {
-          return (
-            <StyledMessage
-              key={messageObj.senderName + messageObj.timestamp}
-              $isSender={messageObj.senderName === username}
-            >
-              <div>{messageObj.content}</div>
-            </StyledMessage>
-          );
-        })}
-      </section>
+      <section ref={contentRef}>{content}</section>
 
       {currentChat && (
         <StyledSend>
@@ -370,9 +678,15 @@ export default function OpenChat() {
             type="text"
             name="message"
             id="message"
-            placeholder="message"
+            placeholder="message or drag file"
             onChange={onMessageChange}
             onKeyDown={handleKeyPress}
+          />
+          <img
+            onClick={handleSend}
+            src="./send-message-icon.svg"
+            width={32}
+            height={32}
           />
         </StyledSend>
       )}

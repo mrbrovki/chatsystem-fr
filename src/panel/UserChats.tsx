@@ -35,6 +35,7 @@ export default function UserChats() {
             name: name,
             image: imageSrc,
             type: ChatType.GROUP,
+            isRead: false,
           },
         });
         break;
@@ -45,6 +46,7 @@ export default function UserChats() {
             username: name,
             avatar: imageSrc,
             type: ChatType.PRIVATE,
+            isRead: false,
           },
         });
         break;
@@ -55,6 +57,7 @@ export default function UserChats() {
             botName: name,
             avatar: imageSrc,
             type: ChatType.BOT,
+            isRead: false,
           },
         });
         break;
@@ -66,7 +69,6 @@ export default function UserChats() {
   };
 
   const chats = [...privateChats, ...groupChats, ...botChats];
-
   return (
     <>
       <StyledHeader>

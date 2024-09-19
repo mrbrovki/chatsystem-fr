@@ -79,7 +79,7 @@ const Signup = ({ setMode }: SignupProps) => {
   const signup = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = await fetchSignup(formData);
-    if (response.ok) {
+    if (response) {
       setIsChecked(true);
       setTimeout(() => {
         setMode(AuthMode.LOGIN);

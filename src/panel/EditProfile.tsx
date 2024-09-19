@@ -6,12 +6,64 @@ import { StyledHeader } from "./CreateGroup";
 import { ActionType, PanelMode } from "../context/types";
 import { StyledButton, StyledForm } from "../App";
 import { StyledPanelButton } from "./Panel";
+import styled from "styled-components";
 
 interface FormData {
   username: string;
   password: string;
   avatar: Blob | null;
 }
+
+const StyledImageUpload = styled.div`
+  text-align: center;
+
+  & input[type="file"] {
+    display: none;
+  }
+
+  .personal-figure {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+
+  .personal-avatar {
+    cursor: pointer;
+    width: 120px;
+    height: 120px;
+    box-sizing: border-box;
+    border-radius: 100%;
+    border: 2px solid transparent;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+    transition: all ease-in-out 0.3s;
+  }
+  .personal-avatar:hover {
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  .personal-figcaption {
+    cursor: pointer;
+    position: absolute;
+    top: 0px;
+    width: inherit;
+    height: inherit;
+    border-radius: 100%;
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0);
+    transition: all ease-in-out 0.3s;
+  }
+
+  .personal-figcaption:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .personal-figcaption > img {
+    margin-top: 32.5px;
+    width: 50px;
+    height: 50px;
+  }
+`;
 
 const EditProfile = () => {
   const {
@@ -73,7 +125,7 @@ const EditProfile = () => {
         </StyledPanelButton>
       </StyledHeader>
       <StyledForm>
-        <div className="personal-image">
+        <StyledImageUpload className="personal-image">
           <label className="label">
             <input type="file" />
             <figure className="personal-figure">
@@ -83,11 +135,11 @@ const EditProfile = () => {
                 alt="avatar"
               />
               <figcaption className="personal-figcaption">
-                <img src="https://raw.githubusercontent.com/ThiagoLuizNunes/        angular-boilerplate/master/src/assets/imgs/camera-white.png" />
+                <img src="https://raw.githubusercontent.com/ThiagoLuizNunes/angular-boilerplate/master/src/assets/imgs/camera-white.png" />
               </figcaption>
             </figure>
           </label>
-        </div>
+        </StyledImageUpload>
 
         <InputField
           type="file"

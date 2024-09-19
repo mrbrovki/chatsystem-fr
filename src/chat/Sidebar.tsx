@@ -72,7 +72,7 @@ export default function Sidebar() {
 
   const logout = () => {
     localStorage.removeItem("jwt");
-    dispatch({ type: ActionType.RESET });
+    dispatch({ type: ActionType.RESET, payload: null });
   };
 
   const onLogoClick = () => {

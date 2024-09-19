@@ -1,127 +1,207 @@
-import { SignupFormData } from "../constants";
-import { Chats, GroupChat, Message, PrivateChat } from "../context/types";
+import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
+import { Messages, Chats, GroupChat, PrivateChat, ChatType } from "../context/types";
 
-export const getAuthHeader = () => {
-  return { Authorization: "Bearer " + localStorage.getItem("jwt") };
-};
+export const jwtAuthHeader = () => ({ Authorization: "Bearer " + localStorage.getItem("jwt") });
 
-export const fetchChats = async ():Promise<Chats> => {
-  const CHATS_URL = "http://localhost:8080/api/v3/chats";
-  const response = await fetch(CHATS_URL, {
-    method: "GET",
-    headers: getAuthHeader(),
-  });
+enum HttpMethod {
+  POST = "POST",
+  PUT = "PUT",
+  GET = "GET",
+  DELETE = "DELETE",
+  PATCH = "PATCH"
+}
+
+export const fetchAllChats = async ():Promise<Chats> => {
+  const url = `${BASE_URL}${CHATS_ROUTE}`;
+  console.log()
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
   return response.json();
 };
 
 export const fetchPrivateChats = async ():Promise<PrivateChat[]> => {
-  const CHATS_URL = "http://localhost:8080/api/v3/chats/private";
-  const response = await fetch(CHATS_URL, {
-    method: "GET",
-    headers: getAuthHeader(),
-  });
+  const url = `${BASE_URL}${CHATS_ROUTE}/private`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
   return response.json();
 };
 
-export const fetchChatById = async (groupId: string): Promise<GroupChat> => {
-  const CHAT_URL = "http://localhost:8080/api/v3/chats/groups/" + groupId;
-  const response = await fetch(CHAT_URL, {
-    method: "GET",
-    headers: getAuthHeader(),
-  });  
+export const fetchPrivateChatByName = async (username: string):Promise<PrivateChat> => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/${username}`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
+  return response.json();
+};
+
+export const fetchGroupById = async (groupId: string): Promise<GroupChat> => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/groups/${groupId}`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
   return response.json();
 };
 
 export const fetchAuth = async () => {
-  const URL = "http://localhost:8080/api/v3/auth/authenticate";
-  const response = await fetch(URL, { method: "GET", headers: getAuthHeader() });
-  if(response.ok){
-      return response.json();
-    }else {
-      throw new Error(`Login failed with status: ${response.status}`);
-    }
+  const url = `${BASE_URL}${AUTH_ROUTE}/authenticate`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    },
+    method: HttpMethod.POST,
+  };
+  const error = () => {
+    localStorage.removeItem("jwt");
+  }
+  const response = await fetchRequest(url, options, error);
+  return response.json();
 };
 
-export const fetchLogin = async (formData: {username: string, password: string}) => {
-  const URL = "http://localhost:8080/api/v3/auth/login";
-  const response = await fetch(URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    if(response.ok){
-      return response.json();
-    }else {
-      throw new Error(`Login failed with status: ${response.status}`);
-    }
+export const fetchLogin = async (formData: LoginFormData) => {
+  const url = `${BASE_URL}${AUTH_ROUTE}/login`;
+  const options = {
+    method: HttpMethod.POST,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: {...formData},
+  };
+  const response = await fetchRequest(url, options);
+  return response.json();
 }
 
 export const fetchSignup = async (formData: SignupFormData) => {
-  const URL = "http://localhost:8080/api/v3/auth/signup";
+  const url = `${BASE_URL}${AUTH_ROUTE}/signup`;
     const { username, email, password } = formData;
-    const response = await fetch(URL, {
-      method: "POST",
-      body: JSON.stringify({ username, email, password }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    return response;
+    const options = {
+    method: HttpMethod.POST,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: { username, email, password },
+  };
+  const response = await fetchRequest(url, options);
+  return response.text();
 }
 
 export const fetchEditUser = async (formData: FormData) => {
-  const URL = "http://localhost:8080/api/v2/users/update";
-  const response = await fetch(URL, {
-    method: "POST",
+  const url = `${BASE_URL}${USERS_ROUTE}/update`;
+  const options = {
     headers: {
-      ...getAuthHeader(),
+      ...jwtAuthHeader(),
+      "Content-Type": "application/json",
     },
+    method: HttpMethod.PUT,
     body: formData,
-  });
+  };
+  const response = await fetchRequest(url, options);
   return response.json();
 }
 
 export const fetchCreateGroup = async (formData: FormData) => {
-  const URL = "http://localhost:8080/api/v3/chats/groups";
-  const response = await fetch(URL, {
-    method: "POST",
+  const url = `${BASE_URL}${CHATS_ROUTE}/groups`;
+  const options = {
     headers: {
-      ...getAuthHeader(),
+      ...jwtAuthHeader(),
+      "Content-Type": "application/json",
     },
+    method: HttpMethod.POST,
     body: formData,
-  });
-    
-  return response;
+  };
+
+  const response = await fetchRequest(url, options);
+  return response.json();
 }
 
 export const fetchAddNewFriend = async (username: string) => {
-  const URL = "http://localhost:8080/api/v3/chats/private/add";
-    const response = await fetch(URL, {
-      method: "PUT",
-      headers: { ...getAuthHeader(), "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username }),
-    });
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/add`;
+  const options = {
+    method: HttpMethod.PUT,
+    headers: {
+      ...jwtAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: {username},
+  };
+  const response = await fetchRequest(url, options);
   return response;
 }
 
 export const fetchUsers = async (): Promise<PrivateChat[]>  => {
-  const ALL_USERS_URL = "http://localhost:8080/api/v2/users";
-  const response = await fetch(ALL_USERS_URL, {
-    method: "GET",
-    headers: getAuthHeader(),
-  });
-  const json = await response.json();
-  return json;
+  const url = `${BASE_URL}${USERS_ROUTE}`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
+  return response.json();
 }
 
-export const fetchMessages = async (endpoint: string): Promise<Message[]> => {
-    const messagesURL = "http://localhost:8080/api/v2/messages/" + endpoint;
-    const response = await fetch(messagesURL, {
-        method: "GET",
-        headers: { "Content-Type": "application/json", ...getAuthHeader() },
-      })
-      const json = await response.json();
-    return json;
+export const fetchMessages = async (): Promise<Messages> => {
+    const url = `${BASE_URL}${MESSAGES_ROUTE}`;
+    const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
   };
+    const response = await fetchRequest(url, options);
+    return response.json();
+  };
+
+interface FileParams{
+  chatType: ChatType; 
+  chatName: string;
+  senderName: string;
+}
+
+export const fetchFileById = async (id: string, params:FileParams): Promise<Blob> => {
+  const {chatType, chatName, senderName} = params;
+  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=
+    ${chatType}&chatName=${chatName}&senderName=${senderName}`;
+  const options = {
+    headers: {
+      ...jwtAuthHeader()
+    }
+  };
+  const response = await fetchRequest(url, options);
+  return response.blob();
+}
+
+interface FetchRequestOptions extends RequestInit {
+  headers?: HeadersInit;
+  body?: any;
+  method?: HttpMethod;
+}
+
+const fetchRequest = async (url: string, options?: FetchRequestOptions, error?:any): Promise<Response> => {
+  const method = options?.method ? options.method : HttpMethod.GET;
+  const body = options?.body? JSON.stringify(options.body): undefined;
+  error = error? error: (str:string) => {throw new Error(`Request failed with status: ${str}`)};
+
+  const response = await fetch(url, {
+    method,
+    headers: options?.headers,
+    body
+  });
+
+  if (!response.ok) {
+    error(response.status);
+  }
+
+  return response;
+};
