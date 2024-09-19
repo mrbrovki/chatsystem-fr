@@ -171,8 +171,7 @@ interface FileParams{
 
 export const fetchFileById = async (id: string, params:FileParams): Promise<Blob> => {
   const {chatType, chatName, senderName} = params;
-  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=
-    ${chatType}&chatName=${chatName}&senderName=${senderName}`;
+  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType}&chatName=${chatName}&senderName=${senderName}`;
   const options = {
     headers: {
       ...jwtAuthHeader()

@@ -29,6 +29,7 @@ import {
   PanelMode,
 } from "../context/types";
 import { Client, Message as StompMessage } from "@stomp/stompjs";
+import ReactPlayer from "react-player";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
@@ -68,7 +69,7 @@ const StyledChatHeader = styled.div`
   border-bottom: solid 1px #e1e1e1;
 `;
 
-const StyledMessage = styled.div<{ $isSender: boolean; $isImage: boolean }>`
+const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   max-width: 320px;
   align-self: ${({ $isSender }) => ($isSender ? "flex-end" : "flex-start")};
 
@@ -91,8 +92,8 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isImage: boolean }>`
       }
     }}
 
-    ${({ $isImage }) => {
-      if ($isImage) {
+    ${({ $isText }) => {
+      if (!$isText) {
         return css`
           padding: 0px;
           overflow: hidden;
@@ -592,7 +593,7 @@ export default function OpenChat() {
           return (
             <StyledMessage
               key={chatMessage.senderName + chatMessage.timestamp}
-              $isImage={false}
+              $isText={true}
               $isSender={chatMessage.senderName === username}
             >
               <div className="content">
@@ -609,7 +610,7 @@ export default function OpenChat() {
             <StyledMessage
               key={chatMessage.senderName + chatMessage.timestamp}
               $isSender={chatMessage.senderName === username}
-              $isImage={true}
+              $isText={false}
             >
               <div className="content">
                 <img src={chatMessage.content} />
@@ -623,15 +624,37 @@ export default function OpenChat() {
             <StyledMessage
               key={chatMessage.senderName + chatMessage.timestamp}
               $isSender={chatMessage.senderName === username}
-              $isImage={false}
+              $isText={false}
             >
               <div className="content">
-                <a href={chatMessage.content}>pdf</a>
+                <a href={chatMessage.content} target="_blank">
+                  pdf
+                </a>
               </div>
               <span>{date.getHours() + ":" + date.getMinutes()}</span>
             </StyledMessage>
           );
         }
+        case MessageType.VIDEO_AVI:
+        case MessageType.VIDEO_MOV:
+        case MessageType.VIDEO_WEBM:
+        case MessageType.VIDEO_MP4:
+          return (
+            <StyledMessage
+              key={chatMessage.senderName + chatMessage.timestamp}
+              $isSender={chatMessage.senderName === username}
+              $isText={false}
+            >
+              <ReactPlayer
+                url={chatMessage.content}
+                controls
+                volume={1}
+                height="100%"
+                width="100%"
+                style={{ borderRadius: 10, overflow: "hidden" }}
+              />
+            </StyledMessage>
+          );
         default:
           return <></>;
       }
