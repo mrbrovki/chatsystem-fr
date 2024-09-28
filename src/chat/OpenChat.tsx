@@ -15,12 +15,14 @@ import {
   fetchMessages,
   fetchPrivateChatByName,
   jwtAuthHeader,
+  fetchUpdateReadStatus,
 } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
 import {
   ActionType,
+  Chat,
   Chats,
   ChatType,
   Message,
@@ -154,7 +156,7 @@ const StyledSend = styled.div`
 
 export default function OpenChat() {
   const {
-    state: { username, currentChat, panelMode, messages },
+    state: { username, currentChat, panelMode, messages, privateChats },
     dispatch,
   } = useContext(Context);
   const messageInput = useRef("");
@@ -300,8 +302,10 @@ export default function OpenChat() {
     messageObj: StompMessage,
     messages: Messages
   ) => {
+    let senderName;
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
+      console.log(message);
       switch (message.type) {
         case MessageType.JOIN: {
           const groupId = message.content as string;
@@ -321,11 +325,13 @@ export default function OpenChat() {
           break;
         }
         case MessageType.TEXT: {
-          console.log(messages);
+          senderName = message.senderName;
           if (!messages[ChatType.PRIVATE][message.senderName]) {
             const newChat = await fetchPrivateChatByName(message.senderName);
+            newChat.unreadCount = 0;
             dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
           }
+          updateReadCount(privateChats, "username", message.senderName, 1);
 
           dispatch({
             type: ActionType.ADD_MESSAGE,
@@ -339,12 +345,19 @@ export default function OpenChat() {
         }
       }
     } else {
-      const senderName = messageObj.headers["sender"];
+      senderName = messageObj.headers["sender"];
       if (!messages[ChatType.PRIVATE][senderName]) {
         const newChat = await fetchPrivateChatByName(senderName);
+        console.log(newChat);
         dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
       }
       handleFileReceive(messageObj, ChatType.PRIVATE);
+    }
+    if (senderName) {
+      dispatch({
+        type: ActionType.ADD_PRIVATE_UNREAD,
+        payload: { chatName: senderName },
+      });
     }
   };
 
@@ -565,22 +578,76 @@ export default function OpenChat() {
     });
   };
 
+  const updateReadCount = (
+    chats: Chat[],
+    prop: string,
+    name: string,
+    unreadCount: number
+  ) => {
+    return chats.map((chat: any) => {
+      console.log(chats);
+      if (chat[prop] === name) {
+        return {
+          ...chat,
+          lastReadTime: Date.now(),
+          unreadCount,
+        };
+      }
+      return chat;
+    });
+  };
+
   useEffect(() => {
     if (!messages || !currentChat) return;
     let chatMessages;
+
     switch (currentChat.type) {
       case ChatType.PRIVATE:
         chatMessages = messages[currentChat.type][currentChat.username];
+
+        dispatch({
+          type: ActionType.PRIVATE_CHATS,
+          payload: updateReadCount(
+            privateChats,
+            "username",
+            currentChat.username,
+            0
+          ),
+        });
+
+        fetchUpdateReadStatus(currentChat.type, currentChat.username);
+
         setName(currentChat.username);
         setImageSrc(currentChat.avatar);
         break;
       case ChatType.GROUP:
         chatMessages = messages[currentChat.type][currentChat.id];
+
+        dispatch({
+          type: ActionType.GROUP_CHATS,
+          payload: updateReadCount(privateChats, "id", currentChat.id, 0),
+        });
+
+        fetchUpdateReadStatus(currentChat.type, currentChat.name);
+
         setName(currentChat.name);
         setImageSrc(currentChat.image);
         break;
       case ChatType.BOT:
         chatMessages = messages[currentChat.type][currentChat.botName];
+
+        dispatch({
+          type: ActionType.BOT_CHATS,
+          payload: updateReadCount(
+            privateChats,
+            "botName",
+            currentChat.botName,
+            0
+          ),
+        });
+
+        fetchUpdateReadStatus(currentChat.type, currentChat.botName);
+
         setName(currentChat.botName);
         setImageSrc(currentChat.avatar);
         break;
@@ -628,7 +695,7 @@ export default function OpenChat() {
             >
               <div className="content">
                 <a href={chatMessage.content} target="_blank">
-                  pdf
+                  <img src={"./public/pdf-icon.svg"} style={{ padding: 5 }} />
                 </a>
               </div>
               <span>{date.getHours() + ":" + date.getMinutes()}</span>

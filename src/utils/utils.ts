@@ -181,6 +181,19 @@ export const fetchFileById = async (id: string, params:FileParams): Promise<Blob
   return response.blob();
 }
 
+export const fetchUpdateReadStatus = async (chatType: ChatType, chatName: string) => {
+  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType}/${chatName}/status`;
+  const options = {
+    method: HttpMethod.PUT,
+    headers: {
+      ...jwtAuthHeader(),
+      "Content-Type": "application/json",
+    }
+  };
+  const response = await fetchRequest(url, options);
+  return response;
+}
+
 interface FetchRequestOptions extends RequestInit {
   headers?: HeadersInit;
   body?: any;

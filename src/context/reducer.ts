@@ -78,6 +78,57 @@ const reducer = (state: State, action: Action): State => {
       }
     }
 
+    case ActionType.ADD_PRIVATE_UNREAD:{
+      const {chatName} = payload;
+      const newPrivateChats = state.privateChats.map((chat) => {
+        if(chat.username === chatName){
+          return {
+            ...chat, unreadCount: chat.unreadCount + 1,
+          }
+        }else{
+          return chat;
+        }
+      })
+
+      return {
+        ...state, privateChats: newPrivateChats
+      }
+    }
+
+    case ActionType.ADD_BOT_UNREAD:{
+      const {chatName} = payload;
+      const newPrivateChats = state.botChats.map((chat) => {
+        if(chat.botName === chatName){
+          return {
+            ...chat, unreadCount: chat.unreadCount + 1,
+          }
+        }else{
+          return chat;
+        }
+      })
+
+      return {
+        ...state, botChats: newPrivateChats
+      }
+    }
+
+    case ActionType.ADD_GROUP_UNREAD:{
+      const {chatName} = payload;
+      const newPrivateChats = state.groupChats.map((chat) => {
+        if(chat.name === chatName){
+          return {
+            ...chat, unreadCount: chat.unreadCount + 1,
+          }
+        }else{
+          return chat;
+        }
+      })
+
+      return {
+        ...state, groupChats: newPrivateChats
+      }
+    }
+
     case ActionType.RESET:{
       return initState;
     }

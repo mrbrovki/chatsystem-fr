@@ -35,7 +35,8 @@ export default function UserChats() {
             name: name,
             image: imageSrc,
             type: ChatType.GROUP,
-            isRead: false,
+            unreadCount: 0,
+            lastReadTime: 0,
           },
         });
         break;
@@ -46,7 +47,8 @@ export default function UserChats() {
             username: name,
             avatar: imageSrc,
             type: ChatType.PRIVATE,
-            isRead: false,
+            unreadCount: 0,
+            lastReadTime: 0,
           },
         });
         break;
@@ -57,7 +59,8 @@ export default function UserChats() {
             botName: name,
             avatar: imageSrc,
             type: ChatType.BOT,
-            isRead: false,
+            unreadCount: 0,
+            lastReadTime: 0,
           },
         });
         break;

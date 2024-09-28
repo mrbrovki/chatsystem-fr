@@ -26,6 +26,7 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 data-id={chat.id}
                 name={chat.name}
                 image={chat.image}
+                unreadCount={chat.unreadCount}
               />
             );
           case ChatType.PRIVATE:
@@ -37,6 +38,7 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 data-name={chat.username}
                 name={chat.username}
                 image={chat.avatar}
+                unreadCount={chat.unreadCount}
               />
             );
           case ChatType.BOT:
@@ -48,6 +50,7 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 data-name={chat.botName}
                 name={chat.botName}
                 image={chat.avatar}
+                unreadCount={chat.unreadCount}
               />
             );
         }

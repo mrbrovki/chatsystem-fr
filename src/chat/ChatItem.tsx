@@ -34,12 +34,24 @@ const StyledChatItem = styled.div`
   }
 `;
 
+const StyledCounter = styled.div`
+  display: block;
+  background-color: #43a5dc;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 50%;
+  line-height: 24px;
+  width: 24px;
+  text-align: center;
+`;
+
 export default function ChatItem(props: any) {
   const {
     state: { panelMode },
   } = useContext(Context);
   const [isSelected, setIsSelected] = useState(false);
-  const { name, image, handleClick, ...restProps } = props;
+  const { name, image, handleClick, unreadCount, ...restProps } = props;
   const defaultURL = image;
   const avatarURL = defaultURL;
 
@@ -52,6 +64,7 @@ export default function ChatItem(props: any) {
     <>
       <StyledAvatar src={avatarURL} />
       <div>{name}</div>
+      {unreadCount ? <StyledCounter>{unreadCount}</StyledCounter> : <></>}
     </>
   );
 

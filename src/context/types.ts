@@ -21,24 +21,27 @@ export interface PrivateChat{
   username: string;
   avatar: string;
   type: ChatType.PRIVATE;
-  isRead: boolean
+  unreadCount: number;
+  lastReadTime: number;
 }
 
 export interface BotChat{
   botName: string;
   avatar: string;
   type: ChatType.BOT; 
-  isRead: boolean;
+  unreadCount: number;
+  lastReadTime: number;
 }
 
 export interface GroupChat{
   id: string;
-  members: string[];
+  members?: string[];
   image: string;
   name: string;
   type: ChatType.GROUP;
-  host: string;
-  isRead: boolean;
+  host?: string;
+  unreadCount: number;
+  lastReadTime: number;
 }
 
 export interface Message{
@@ -72,7 +75,7 @@ export enum PanelMode{
   USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP
 }
 export enum ActionType{
-  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES
+  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD
 }
 
 export interface State {
@@ -105,6 +108,10 @@ interface REPLACE_CHAT_MESSAGES{
   chatType: ChatType;
 }
 
+interface UNREAD_PAYLOAD{
+  chatName: string;
+}
+
 export type Action =
   | { type: ActionType.USERNAME; payload: string }
   | { type: ActionType.AVATAR; payload: string }
@@ -120,4 +127,8 @@ export type Action =
   | { type: ActionType.ADD_MESSAGE, payload: ADD_MESSAGE_PAYLOAD}
   | { type: ActionType.CHAT_MESSAGES, payload: REPLACE_CHAT_MESSAGES}
   | { type: ActionType.REPLACE_MESSAGE, payload: REPLACE_MESSAGE_PAYLOAD}
+  | { type: ActionType.ADD_PRIVATE_UNREAD, payload: UNREAD_PAYLOAD} 
+  | { type: ActionType.ADD_BOT_UNREAD, payload: UNREAD_PAYLOAD} 
+  | { type: ActionType.ADD_GROUP_UNREAD, payload: UNREAD_PAYLOAD} 
+  | { type: ActionType.RESET_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.RESET, payload: null};
