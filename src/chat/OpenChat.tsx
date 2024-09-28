@@ -305,7 +305,6 @@ export default function OpenChat() {
     let senderName;
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
-      console.log(message);
       switch (message.type) {
         case MessageType.JOIN: {
           const groupId = message.content as string;
@@ -348,7 +347,6 @@ export default function OpenChat() {
       senderName = messageObj.headers["sender"];
       if (!messages[ChatType.PRIVATE][senderName]) {
         const newChat = await fetchPrivateChatByName(senderName);
-        console.log(newChat);
         dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
       }
       handleFileReceive(messageObj, ChatType.PRIVATE);
@@ -585,7 +583,6 @@ export default function OpenChat() {
     unreadCount: number
   ) => {
     return chats.map((chat: any) => {
-      console.log(chats);
       if (chat[prop] === name) {
         return {
           ...chat,
@@ -603,7 +600,10 @@ export default function OpenChat() {
 
     switch (currentChat.type) {
       case ChatType.PRIVATE:
+        console.log(currentChat);
+        console.log(messages);
         chatMessages = messages[currentChat.type][currentChat.username];
+        if (!chatMessages) return;
 
         dispatch({
           type: ActionType.PRIVATE_CHATS,
@@ -622,6 +622,7 @@ export default function OpenChat() {
         break;
       case ChatType.GROUP:
         chatMessages = messages[currentChat.type][currentChat.id];
+        if (!chatMessages) return;
 
         dispatch({
           type: ActionType.GROUP_CHATS,
@@ -635,6 +636,7 @@ export default function OpenChat() {
         break;
       case ChatType.BOT:
         chatMessages = messages[currentChat.type][currentChat.botName];
+        if (!chatMessages) return;
 
         dispatch({
           type: ActionType.BOT_CHATS,

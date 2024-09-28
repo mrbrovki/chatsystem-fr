@@ -13,7 +13,6 @@ enum HttpMethod {
 
 export const fetchAllChats = async ():Promise<Chats> => {
   const url = `${BASE_URL}${CHATS_ROUTE}`;
-  console.log()
   const options = {
     headers: {
       ...jwtAuthHeader()
