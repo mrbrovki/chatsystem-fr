@@ -77,7 +77,7 @@ export const fetchLogin = async (formData: LoginFormData) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: {...formData},
+    body: JSON.stringify({...formData}),
   };
   const response = await fetchRequest(url, options);
   return response.json();
@@ -91,7 +91,7 @@ export const fetchSignup = async (formData: SignupFormData) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: { username, email, password },
+    body: JSON.stringify({ username, email, password }),
   };
   const response = await fetchRequest(url, options);
   return response.text();
@@ -102,7 +102,6 @@ export const fetchEditUser = async (formData: FormData) => {
   const options = {
     headers: {
       ...jwtAuthHeader(),
-      "Content-Type": "application/json",
     },
     method: HttpMethod.PUT,
     body: formData,
@@ -134,7 +133,7 @@ export const fetchAddNewFriend = async (username: string) => {
       ...jwtAuthHeader(),
       "Content-Type": "application/json",
     },
-    body: {username},
+    body: JSON.stringify({username}),
   };
   const response = await fetchRequest(url, options);
   return response;
@@ -201,7 +200,7 @@ interface FetchRequestOptions extends RequestInit {
 
 const fetchRequest = async (url: string, options?: FetchRequestOptions, error?:any): Promise<Response> => {
   const method = options?.method ? options.method : HttpMethod.GET;
-  const body = options?.body? JSON.stringify(options.body): undefined;
+  const body = options?.body;
   error = error? error: (str:string) => {throw new Error(`Request failed with status: ${str}`)};
 
   const response = await fetch(url, {
