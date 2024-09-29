@@ -228,11 +228,6 @@ export default function OpenChat() {
       type: ActionType.BOT_CHATS,
       payload: chats[ChatType.BOT],
     });
-
-    dispatch({
-      type: ActionType.CURRENT_CHAT,
-      payload: chats[ChatType.PRIVATE][0],
-    });
   };
 
   const subscribeToGroup = async (stompClient: Client, groupId: string) => {
@@ -268,6 +263,10 @@ export default function OpenChat() {
           });
           break;
       }
+      dispatch({
+        type: ActionType.ADD_BOT_UNREAD,
+        payload: { chatName: message.senderName },
+      });
     }
   };
 
@@ -295,6 +294,10 @@ export default function OpenChat() {
     } else {
       handleFileReceive(messageObj, ChatType.GROUP, groupId);
     }
+    dispatch({
+      type: ActionType.ADD_GROUP_UNREAD,
+      payload: { chatName: groupId },
+    });
   };
 
   const onPrivateMessageReceived = async (
@@ -330,7 +333,6 @@ export default function OpenChat() {
             newChat.unreadCount = 0;
             dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
           }
-          updateReadCount(privateChats, "username", message.senderName, 1);
 
           dispatch({
             type: ActionType.ADD_MESSAGE,
@@ -339,6 +341,11 @@ export default function OpenChat() {
               chatName: message.senderName,
               message: message,
             },
+          });
+
+          dispatch({
+            type: ActionType.ADD_PRIVATE_UNREAD,
+            payload: { chatName: senderName },
           });
           break;
         }
@@ -349,13 +356,13 @@ export default function OpenChat() {
         const newChat = await fetchPrivateChatByName(senderName);
         dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
       }
-      handleFileReceive(messageObj, ChatType.PRIVATE);
-    }
-    if (senderName) {
+
       dispatch({
         type: ActionType.ADD_PRIVATE_UNREAD,
         payload: { chatName: senderName },
       });
+
+      handleFileReceive(messageObj, ChatType.PRIVATE);
     }
   };
 
@@ -600,11 +607,11 @@ export default function OpenChat() {
 
     switch (currentChat.type) {
       case ChatType.PRIVATE:
-        console.log(currentChat);
-        console.log(messages);
+        setName(currentChat.username);
+        setImageSrc(currentChat.avatar);
+
         chatMessages = messages[currentChat.type][currentChat.username];
         if (!chatMessages) return;
-
         dispatch({
           type: ActionType.PRIVATE_CHATS,
           payload: updateReadCount(
@@ -616,11 +623,11 @@ export default function OpenChat() {
         });
 
         fetchUpdateReadStatus(currentChat.type, currentChat.username);
-
-        setName(currentChat.username);
-        setImageSrc(currentChat.avatar);
         break;
       case ChatType.GROUP:
+        setName(currentChat.name);
+        setImageSrc(currentChat.image);
+
         chatMessages = messages[currentChat.type][currentChat.id];
         if (!chatMessages) return;
 
@@ -630,11 +637,10 @@ export default function OpenChat() {
         });
 
         fetchUpdateReadStatus(currentChat.type, currentChat.name);
-
-        setName(currentChat.name);
-        setImageSrc(currentChat.image);
         break;
       case ChatType.BOT:
+        setName(currentChat.botName);
+        setImageSrc(currentChat.avatar);
         chatMessages = messages[currentChat.type][currentChat.botName];
         if (!chatMessages) return;
 
@@ -649,9 +655,6 @@ export default function OpenChat() {
         });
 
         fetchUpdateReadStatus(currentChat.type, currentChat.botName);
-
-        setName(currentChat.botName);
-        setImageSrc(currentChat.avatar);
         break;
     }
     chatMessages = chatMessages ? chatMessages : [];
@@ -665,9 +668,7 @@ export default function OpenChat() {
               $isText={true}
               $isSender={chatMessage.senderName === username}
             >
-              <div className="content">
-                {chatMessage.content.replace("{{user}}", username)}
-              </div>
+              <div className="content">{chatMessage.content}</div>
               <span>{date.getHours() + ":" + date.getMinutes()}</span>
             </StyledMessage>
           );
@@ -736,14 +737,26 @@ export default function OpenChat() {
   }, [messages]);
 
   useEffect(() => {
-    (async () => {
-      const chats = await fetchAllChats();
-      connectToWebsocket(chats);
-    })();
-    (async () => {
-      await loadMessages();
-      loadFiles();
-    })();
+    const fetchChats = async () => {
+      try {
+        const chats = await fetchAllChats();
+        connectToWebsocket(chats);
+      } catch (error) {
+        console.error("Error fetching chats:", error);
+      }
+    };
+
+    const loadMessagesAndFiles = async () => {
+      try {
+        await loadMessages();
+        loadFiles();
+      } catch (error) {
+        console.error("Error loading messages or files:", error);
+      }
+    };
+
+    fetchChats();
+    loadMessagesAndFiles();
   }, []);
 
   return (

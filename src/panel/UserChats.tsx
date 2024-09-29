@@ -2,7 +2,13 @@ import { MouseEvent, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import ChatList from "../chat/ChatList";
-import { ActionType, Chat, ChatType, PanelMode } from "../context/types";
+import {
+  ActionType,
+  Chat,
+  ChatType,
+  Message,
+  PanelMode,
+} from "../context/types";
 
 const StyledHeader = styled.header`
   & > h1 {
@@ -100,8 +106,69 @@ export default function UserChats() {
       }
     }
   };
+
+  const highestLower = (arr: Message[], timestamp: number): number => {
+    let left = 0;
+    let right = arr.length - 1;
+    let result = -1;
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+
+      if (arr[mid].timestamp < timestamp) {
+        result = mid;
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+
+    return result;
+  };
+
+  const countUnreadMessages = (
+    chatType: ChatType,
+    chatName: string,
+    lastReadTime: number
+  ) => {
+    let counter = 0;
+    const chatMessages = messages[chatType][chatName];
+    if (chatMessages) {
+      counter =
+        chatMessages.length - highestLower(chatMessages, lastReadTime) - 1;
+    }
+    return counter;
+  };
+
   useEffect(() => {
     const allChats = [...privateChats, ...groupChats, ...botChats] as Chat[];
+
+    allChats.forEach((chat) => {
+      switch (chat.type) {
+        case ChatType.PRIVATE:
+          chat.unreadCount = countUnreadMessages(
+            chat.type,
+            chat.username,
+            chat.lastReadTime
+          );
+          break;
+        case ChatType.BOT:
+          chat.unreadCount = countUnreadMessages(
+            chat.type,
+            chat.botName,
+            chat.lastReadTime
+          );
+          break;
+        case ChatType.GROUP:
+          chat.unreadCount = countUnreadMessages(
+            chat.type,
+            chat.id,
+            chat.lastReadTime
+          );
+          break;
+      }
+    });
+
     const sortedChats = allChats.sort((chat1: Chat, chat2: Chat) => {
       return getLastMessageTimestamp(chat2) - getLastMessageTimestamp(chat1);
     });

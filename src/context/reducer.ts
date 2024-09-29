@@ -97,7 +97,7 @@ const reducer = (state: State, action: Action): State => {
 
     case ActionType.ADD_BOT_UNREAD:{
       const {chatName} = payload;
-      const newPrivateChats = state.botChats.map((chat) => {
+      const newBotChats = state.botChats.map((chat) => {
         if(chat.botName === chatName){
           return {
             ...chat, unreadCount: chat.unreadCount + 1,
@@ -108,13 +108,13 @@ const reducer = (state: State, action: Action): State => {
       })
 
       return {
-        ...state, botChats: newPrivateChats
+        ...state, botChats: newBotChats
       }
     }
 
     case ActionType.ADD_GROUP_UNREAD:{
       const {chatName} = payload;
-      const newPrivateChats = state.groupChats.map((chat) => {
+      const newGroupChats = state.groupChats.map((chat) => {
         if(chat.name === chatName){
           return {
             ...chat, unreadCount: chat.unreadCount + 1,
@@ -125,7 +125,7 @@ const reducer = (state: State, action: Action): State => {
       })
 
       return {
-        ...state, groupChats: newPrivateChats
+        ...state, groupChats: newGroupChats
       }
     }
 
