@@ -1,7 +1,7 @@
 import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
 import { Messages, Chats, GroupChat, PrivateChat, ChatType } from "../context/types";
 
-export const jwtAuthHeader = () => ({ Authorization: "Bearer " + localStorage.getItem("jwt") });
+export const jwtAuthHeader = () => ({ Authorization: "Bearer " + sessionStorage.getItem("jwt") });
 
 enum HttpMethod {
   POST = "POST",
@@ -64,7 +64,7 @@ export const fetchAuth = async () => {
     method: HttpMethod.POST,
   };
   const error = () => {
-    localStorage.removeItem("jwt");
+    sessionStorage.removeItem("jwt");
   }
   const response = await fetchRequest(url, options, error);
   return response.json();

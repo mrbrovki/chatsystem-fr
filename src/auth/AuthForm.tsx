@@ -55,10 +55,10 @@ const AuthForm = () => {
 
   useEffect(() => {
     const authenticate = async () => {
-      const token = localStorage.getItem("jwt");
+      const token = sessionStorage.getItem("jwt");
       if (token) {
         const json = (await fetchAuth()) as any;
-        localStorage.setItem("jwt", json.accessToken);
+        sessionStorage.setItem("jwt", json.accessToken);
         dispatch({ type: ActionType.USERNAME, payload: json.username });
         dispatch({
           type: ActionType.AVATAR,

@@ -71,7 +71,7 @@ export default function Sidebar() {
   } = useContext(Context);
 
   const logout = () => {
-    localStorage.removeItem("jwt");
+    sessionStorage.removeItem("jwt");
     dispatch({ type: ActionType.RESET, payload: null });
   };
 

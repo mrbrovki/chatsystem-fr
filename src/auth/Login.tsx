@@ -40,7 +40,7 @@ export default function Login({ setMode }: LoginProps) {
     e.preventDefault();
     const response = await fetchLogin(formData);
     const token = response.accessToken;
-    localStorage.setItem("jwt", token);
+    sessionStorage.setItem("jwt", token);
     dispatch({ type: ActionType.USERNAME, payload: formData.username });
     dispatch({
       type: ActionType.AVATAR,
