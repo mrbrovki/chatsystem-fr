@@ -6,6 +6,7 @@ import { fetchCreateGroup } from "../utils/utils";
 import ChatList from "../chat/ChatList";
 import { ActionType, PanelMode } from "../context/types";
 import { StyledPanelButton } from "./Panel";
+import AvatarUpload from "../components/AvatarUpload";
 
 export const StyledHeader = styled.div`
   display: flex;
@@ -72,9 +73,7 @@ const CreateGroup = () => {
         memberNames: formData.memberNames,
       })
     );
-    if (formData.image) {
-      fd.append("image", formData.image);
-    }
+    fd.append("image", formData.image || new Blob());
     const response = await fetchCreateGroup(fd);
 
     await response.json();
@@ -105,11 +104,11 @@ const CreateGroup = () => {
         </StyledPanelButton>
       </StyledHeader>
 
-      <InputField
-        type="file"
-        label="image"
-        id="create-group-image"
+      <AvatarUpload
+        htmlFor="create-group-image"
         name="image"
+        id="create-group-image"
+        currentSrc={"./public/group-icon.svg"}
         handleChange={handleChange}
       />
 

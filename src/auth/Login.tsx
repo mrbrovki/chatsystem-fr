@@ -32,8 +32,8 @@ export default function Login({ setMode }: LoginProps) {
   const { dispatch } = useContext(Context);
 
   const [formData, setFormData] = useState({
-    username: "user1",
-    password: "1234",
+    username: "",
+    password: "",
   });
 
   const login = async (e: React.MouseEvent<HTMLButtonElement>) => {

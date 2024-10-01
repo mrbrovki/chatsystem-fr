@@ -42,4 +42,4 @@ export const MESSAGES_ROUTE = "/api/v2/messages";
 export const FILES_ROUTE = MESSAGES_ROUTE + "/files"
 export const CHATS_ROUTE = "/api/v3/chats";
 export const AUTH_ROUTE = "/api/v3/auth";
-export const USERS_ROUTE = "/api/v2/users";
+export const USERS_ROUTE = "/api/v3/users";

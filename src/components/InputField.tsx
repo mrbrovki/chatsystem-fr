@@ -1,12 +1,12 @@
 import { ChangeEventHandler, useState } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
-const StyledInputContainer = styled.div`
+const StyledInputContainer = styled.div<{
+  $isError: boolean;
+  $errorContent: string;
+}>`
   position: relative;
-  height: 4rem;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
+  height: 5rem;
 
   & > label {
     left: 1rem;
@@ -19,6 +19,7 @@ const StyledInputContainer = styled.div`
 
   & > input {
     width: 100%;
+    margin-top: 0.5rem;
     height: 3rem;
     border-radius: 16px;
     padding-left: 16px;
@@ -36,11 +37,25 @@ const StyledInputContainer = styled.div`
   & > img {
     position: absolute;
     right: 16px;
+    top: 1.5rem;
 
     &:hover {
       cursor: pointer;
     }
   }
+  ${({ $isError, $errorContent }) => {
+    if ($isError) {
+      return css`
+        &::after {
+          display: block;
+          padding-left: 16px;
+          font-size: 0.8rem;
+          content: "${$errorContent}";
+          color: #cc0d0d;
+        }
+      `;
+    }
+  }}
 `;
 
 interface InputProps {
@@ -53,6 +68,8 @@ interface InputProps {
   autoComplete?: string;
   value?: string;
   isPassword?: boolean;
+  isError?: boolean;
+  errorContent?: string;
 }
 
 const InputField = (props: InputProps) => {
@@ -80,7 +97,10 @@ const InputField = (props: InputProps) => {
     );
 
   return (
-    <StyledInputContainer>
+    <StyledInputContainer
+      $isError={props.isError || false}
+      $errorContent={props.errorContent || ""}
+    >
       <label htmlFor={props.label}>{props.label}</label>
       <input
         type={type}

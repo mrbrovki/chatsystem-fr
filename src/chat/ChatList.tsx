@@ -25,7 +25,7 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 data-name={chat.id}
                 data-id={chat.id}
                 name={chat.name}
-                image={chat.image}
+                image={chat.image || "./public/group-icon.svg"}
                 unreadCount={chat.unreadCount}
               />
             );

@@ -52,9 +52,9 @@ const EditProfile = () => {
         password: formData.password,
       })
     );
-    if (formData.avatar) {
-      fd.append("avatar", formData.avatar);
-    }
+
+    fd.append("avatar", formData.avatar || new Blob());
+
     console.log(formData);
     const response = await fetchEditUser(fd);
 

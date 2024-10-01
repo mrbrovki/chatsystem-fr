@@ -34,7 +34,6 @@ export const StyledForm = styled.form`
   flex-flow: column nowrap;
   width: 100%;
   max-width: 500px;
-  gap: 1rem 0;
   align-self: center;
 `;
 

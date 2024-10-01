@@ -115,7 +115,6 @@ export const fetchCreateGroup = async (formData: FormData) => {
   const options = {
     headers: {
       ...jwtAuthHeader(),
-      "Content-Type": "application/json",
     },
     method: HttpMethod.POST,
     body: formData,
@@ -192,21 +191,40 @@ export const fetchUpdateReadStatus = async (chatType: ChatType, chatName: string
   return response;
 }
 
+export const doesUserExist = async(username: string, signal: AbortSignal) => {
+  const url = `${BASE_URL}${USERS_ROUTE}/exists?username=${username}`;
+  const options = {
+    method: HttpMethod.GET,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal,
+  };
+  const error = (str: string) => {
+    console.log(str);
+  }
+  const response = await fetchRequest(url, options, error);
+  return response;
+}
+
 interface FetchRequestOptions extends RequestInit {
   headers?: HeadersInit;
   body?: any;
   method?: HttpMethod;
+  signal?: AbortSignal;
 }
 
 const fetchRequest = async (url: string, options?: FetchRequestOptions, error?:any): Promise<Response> => {
   const method = options?.method ? options.method : HttpMethod.GET;
   const body = options?.body;
   error = error? error: (str:string) => {throw new Error(`Request failed with status: ${str}`)};
+  const signal = options?.signal;
 
   const response = await fetch(url, {
     method,
     headers: options?.headers,
-    body
+    body,
+    signal,
   });
 
   if (!response.ok) {
