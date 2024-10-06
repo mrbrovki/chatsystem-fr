@@ -1,13 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import {
-  ChangeEvent,
-  DragEvent,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { DragEvent, useContext, useEffect, useRef, useState } from "react";
 import {
   fetchGroupById,
   fetchAllChats,
@@ -16,6 +9,9 @@ import {
   fetchPrivateChatByName,
   jwtAuthHeader,
   fetchUpdateReadStatus,
+  sendFile,
+  getChatName,
+  saveFile,
 } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
@@ -32,6 +28,7 @@ import {
 } from "../context/types";
 import { Client, Message as StompMessage } from "@stomp/stompjs";
 import ReactPlayer from "react-player";
+import MessageComposer from "./MessageComposer";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
@@ -117,49 +114,12 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   }
 `;
 
-const StyledSend = styled.div`
-  height: 70px;
-  background-color: #ffffff;
-  border-radius: 12px 12px 20px 20px;
-  padding: 0 16px 0;
-  position: relative;
-
-  & > input {
-    background-color: #f7f7f7;
-    padding: 0 16px;
-    height: 48px;
-    width: 100%;
-    border: none;
-    box-shadow: 0 0 8px #00000026;
-    border-radius: 12px;
-
-    &:focus {
-      outline: none;
-    }
-
-    &::placeholder {
-      color: #00000058;
-    }
-  }
-
-  img {
-    position: absolute;
-    right: 24px;
-    top: 8px;
-    fill: black;
-
-    &:hover {
-      cursor: pointer;
-    }
-  }
-`;
-
 export default function OpenChat() {
   const {
     state: { username, currentChat, panelMode, messages, privateChats },
     dispatch,
   } = useContext(Context);
-  const messageInput = useRef("");
+
   const [imageSrc, setImageSrc] = useState(
     `https://api.multiavatar.com/default.svg`
   );
@@ -169,7 +129,6 @@ export default function OpenChat() {
 
   const stompClientRef = useRef<Client | null>(null);
   const messagesRef = useRef<Messages>();
-  const contentRef = useRef<any>(null);
 
   const connectToWebsocket = (chats: Chats) => {
     const socket = new WebSocket("ws://localhost:8080/ws");
@@ -375,30 +334,7 @@ export default function OpenChat() {
       type: messageObj.headers["contentType"],
     });
     const senderName = messageObj.headers["sender"];
-    saveFile(blob, senderName, chatType, chatName || senderName);
-  };
-
-  const saveFile = (
-    data: Blob | File,
-    senderName: string,
-    chatType: ChatType,
-    chatName: string
-  ) => {
-    const objectURL = URL.createObjectURL(data);
-    const message = {
-      timestamp: Date.now(),
-      content: objectURL,
-      type: data.type as MessageType,
-      senderName: senderName,
-    };
-    dispatch({
-      type: ActionType.ADD_MESSAGE,
-      payload: {
-        chatType: chatType,
-        chatName: chatName,
-        message: message,
-      },
-    });
+    saveFile(dispatch, blob, senderName, chatType, chatName || senderName);
   };
 
   const loadMessages = async () => {
@@ -444,92 +380,6 @@ export default function OpenChat() {
     }
   };
 
-  const onMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    messageInput.current = e.target.value;
-  };
-
-  const handleSend = async () => {
-    if (!stompClientRef.current || !currentChat) return;
-    let url: string;
-    const message = {
-      type: MessageType.TEXT,
-      timestamp: Date.now(),
-      content: messageInput.current,
-      senderName: username,
-    };
-
-    switch (currentChat.type) {
-      case ChatType.BOT:
-        url = "/app/chat.sendToBot";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.botName,
-          }),
-          headers: jwtAuthHeader(),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.BOT,
-            chatName: currentChat.botName,
-            message: message,
-          },
-        });
-        break;
-      case ChatType.GROUP:
-        url = "/app/chat.sendToGroup";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.name,
-          }),
-          headers: jwtAuthHeader(),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.GROUP,
-            chatName: currentChat.name,
-            message: message,
-          },
-        });
-        break;
-      case ChatType.PRIVATE: {
-        url = "/app/chat.sendToPrivate";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.username,
-          }),
-          headers: jwtAuthHeader(),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.PRIVATE,
-            chatName: currentChat.username,
-            message: message,
-          },
-        });
-        break;
-      }
-    }
-  };
-
-  const handleKeyPress = (e: any) => {
-    if (e.key == "Enter") {
-      handleSend();
-      e.currentTarget.value = "";
-    }
-  };
-
   const onChatFocus = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };
@@ -549,37 +399,9 @@ export default function OpenChat() {
     if (!currentChat) return;
     [...e.dataTransfer.files].forEach(async (file, i) => {
       console.log(`… file[${i}].name = ${file.name}`);
-      const buffer = new Uint8Array(await file.arrayBuffer());
-      let url;
-      let receiverName;
-      switch (currentChat.type) {
-        case ChatType.PRIVATE:
-          url = "/app/chat.sendFileToPrivate";
-          receiverName = currentChat.username;
-          break;
-        case ChatType.BOT:
-          url = "/app/chat.sendFileToBot";
-          receiverName = currentChat.botName;
-          break;
-        case ChatType.GROUP:
-          url = "/app/chat.sendFileToGroup";
-          receiverName = currentChat.id;
-          break;
-      }
-
-      if (!stompClientRef.current) return;
-      stompClientRef.current.publish({
-        destination: url!,
-        binaryBody: buffer,
-        headers: {
-          ...jwtAuthHeader(),
-          "file-type": file.type,
-          "receiver-name": receiverName!,
-          "content-type": "application/octet-stream",
-        },
-      });
-
-      saveFile(file, username, currentChat.type, receiverName);
+      const receiverName = getChatName(currentChat);
+      sendFile(file, currentChat, receiverName, stompClientRef.current);
+      saveFile(dispatch, file, username, currentChat.type, receiverName);
     });
   };
 
@@ -775,26 +597,9 @@ export default function OpenChat() {
         </StyledChatHeader>
       )}
 
-      <section ref={contentRef}>{content}</section>
+      <section>{content}</section>
 
-      {currentChat && (
-        <StyledSend>
-          <input
-            type="text"
-            name="message"
-            id="message"
-            placeholder="message or drag file"
-            onChange={onMessageChange}
-            onKeyDown={handleKeyPress}
-          />
-          <img
-            onClick={handleSend}
-            src="./send-message-icon.svg"
-            width={32}
-            height={32}
-          />
-        </StyledSend>
-      )}
+      <MessageComposer num={0} ref={stompClientRef} />
     </StyledChat>
   );
 }

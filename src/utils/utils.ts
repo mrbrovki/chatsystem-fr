@@ -1,5 +1,6 @@
+import { Client } from "@stomp/stompjs";
 import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
-import { Messages, Chats, GroupChat, PrivateChat, ChatType } from "../context/types";
+import { Messages, Chats, GroupChat, PrivateChat, ChatType, Chat, Action, MessageType, ActionType } from "../context/types";
 
 export const jwtAuthHeader = () => ({ Authorization: "Bearer " + sessionStorage.getItem("jwt") });
 
@@ -233,3 +234,66 @@ const fetchRequest = async (url: string, options?: FetchRequestOptions, error?:a
 
   return response;
 };
+
+export const getChatName = (chat: Chat) => {
+  switch (chat.type) {
+    case ChatType.PRIVATE:
+      return chat.username;
+    case ChatType.BOT:
+      return chat.botName;
+    case ChatType.GROUP:
+      return chat.id;
+  }
+}
+
+export const sendFile = async (file: File, chat: Chat, receiverName: string, stompClient: Client | null) => {
+  const buffer = new Uint8Array(await file.arrayBuffer());
+  let url;
+  switch (chat.type) {
+    case ChatType.PRIVATE:
+      url = "/app/chat.sendFileToPrivate";
+      break;
+    case ChatType.BOT:
+      url = "/app/chat.sendFileToBot";
+      break;
+    case ChatType.GROUP:
+      url = "/app/chat.sendFileToGroup";
+      break;
+  }
+
+  if (!stompClient) return;
+  stompClient.publish({
+    destination: url!,
+    binaryBody: buffer,
+    headers: {
+      ...jwtAuthHeader(),
+      "file-type": file.type,
+      "receiver-name": receiverName!,
+      "content-type": "application/octet-stream",
+    },
+  });
+}
+
+export const saveFile = (
+    dispatch: React.Dispatch<Action>, 
+    data: Blob | File,
+    senderName: string,
+    chatType: ChatType,
+    chatName: string
+  ) => {
+    const objectURL = URL.createObjectURL(data);
+    const message = {
+      timestamp: Date.now(),
+      content: objectURL,
+      type: data.type as MessageType,
+      senderName: senderName,
+    };
+    dispatch({
+      type: ActionType.ADD_MESSAGE,
+      payload: {
+        chatType: chatType,
+        chatName: chatName,
+        message: message,
+      },
+    });
+  };

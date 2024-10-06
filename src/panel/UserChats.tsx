@@ -9,6 +9,7 @@ import {
   Message,
   PanelMode,
 } from "../context/types";
+import { getChatName } from "../utils/utils";
 
 const StyledHeader = styled.header`
   & > h1 {
@@ -79,32 +80,14 @@ export default function UserChats() {
   };
 
   const getLastMessageTimestamp = (chat: Chat) => {
-    switch (chat.type) {
-      case ChatType.PRIVATE: {
-        let timestamp = 0;
-        const chatMessages = messages[chat.type][chat.username];
-        if (chatMessages && chatMessages.length > 0) {
-          timestamp = chatMessages[chatMessages.length - 1].timestamp;
-        }
-        return timestamp;
-      }
-      case ChatType.BOT: {
-        let timestamp = 0;
-        const chatMessages = messages[chat.type][chat.botName];
-        if (chatMessages && chatMessages.length > 0) {
-          timestamp = chatMessages[chatMessages.length - 1].timestamp;
-        }
-        return timestamp;
-      }
-      case ChatType.GROUP: {
-        let timestamp = 0;
-        const chatMessages = messages[chat.type][chat.id];
-        if (chatMessages && chatMessages.length > 0) {
-          timestamp = chatMessages[chatMessages.length - 1].timestamp;
-        }
-        return timestamp;
-      }
+    const chatName = getChatName(chat);
+
+    let timestamp = 0;
+    const chatMessages = messages[chat.type][chatName];
+    if (chatMessages && chatMessages.length > 0) {
+      timestamp = chatMessages[chatMessages.length - 1].timestamp;
     }
+    return timestamp;
   };
 
   const highestLower = (arr: Message[], timestamp: number): number => {
@@ -144,29 +127,12 @@ export default function UserChats() {
     const allChats = [...privateChats, ...groupChats, ...botChats] as Chat[];
 
     allChats.forEach((chat) => {
-      switch (chat.type) {
-        case ChatType.PRIVATE:
-          chat.unreadCount = countUnreadMessages(
-            chat.type,
-            chat.username,
-            chat.lastReadTime
-          );
-          break;
-        case ChatType.BOT:
-          chat.unreadCount = countUnreadMessages(
-            chat.type,
-            chat.botName,
-            chat.lastReadTime
-          );
-          break;
-        case ChatType.GROUP:
-          chat.unreadCount = countUnreadMessages(
-            chat.type,
-            chat.id,
-            chat.lastReadTime
-          );
-          break;
-      }
+      const chatName = getChatName(chat);
+      chat.unreadCount = countUnreadMessages(
+        chat.type,
+        chatName,
+        chat.lastReadTime
+      );
     });
 
     const sortedChats = allChats.sort((chat1: Chat, chat2: Chat) => {
