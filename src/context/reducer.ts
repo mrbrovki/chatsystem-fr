@@ -7,7 +7,7 @@ const reducer = (state: State, action: Action): State => {
     case ActionType.USERNAME: 
       return { ...state, username: payload };
     case ActionType.AVATAR:
-      return { ...state, avatar: payload +  `?timestamp=${Date.now()}`};
+      return { ...state, avatar: payload};
     case ActionType.CURRENT_CHAT:
       return { ...state, currentChat: payload };
 

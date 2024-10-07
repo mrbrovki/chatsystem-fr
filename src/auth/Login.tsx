@@ -39,15 +39,17 @@ export default function Login({ setMode }: LoginProps) {
   const login = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = await fetchLogin(formData);
-    const token = response.accessToken;
-    sessionStorage.setItem("jwt", token);
-    dispatch({ type: ActionType.USERNAME, payload: formData.username });
-    dispatch({
-      type: ActionType.AVATAR,
-      payload:
-        "https://devbrovki-chat-avatars.s3.eu-central-1.amazonaws.com/" +
-        formData.username,
-    });
+    const { accessToken, username, avatar } = response;
+
+    sessionStorage.setItem("jwt", accessToken);
+    dispatch({ type: ActionType.USERNAME, payload: username });
+
+    if (avatar) {
+      dispatch({
+        type: ActionType.AVATAR,
+        payload: `${avatar}?timestamp=${Date.now()}`,
+      });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

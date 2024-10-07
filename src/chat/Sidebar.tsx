@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import { ActionType, PanelMode } from "../context/types";
@@ -69,6 +69,7 @@ export default function Sidebar() {
     state: { avatar },
     dispatch,
   } = useContext(Context);
+  const [currentSrc, setCurrentSrc] = useState("./public/user-icon.svg");
 
   const logout = () => {
     sessionStorage.removeItem("jwt");
@@ -79,10 +80,15 @@ export default function Sidebar() {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.EDIT_PROFILE });
   };
 
+  useEffect(() => {
+    if (!avatar) return;
+    setCurrentSrc(avatar);
+  }, [avatar]);
+
   return (
     <StyledSidebar>
       <StyledEditProfile onClick={onLogoClick}>
-        <ProfilePicture src={avatar} />
+        <ProfilePicture src={currentSrc} />
         <p>Profile</p>
       </StyledEditProfile>
       <LogoutIcon src="./public/logout-icon.svg" onClick={logout} />

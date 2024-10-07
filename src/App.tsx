@@ -47,6 +47,7 @@ export const StyledButton = styled.button<{
   font-size: 1rem;
   border-radius: 8px;
   transition: color 0.3s, background-color 0.3s;
+  margin: 4px 0;
 
   &:hover {
     background-color: ${({ $isDark }) => ($isDark ? "#ffffff" : "#000000")};

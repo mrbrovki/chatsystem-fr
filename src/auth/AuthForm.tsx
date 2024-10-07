@@ -57,15 +57,12 @@ const AuthForm = () => {
     const authenticate = async () => {
       const token = sessionStorage.getItem("jwt");
       if (token) {
-        const json = (await fetchAuth()) as any;
-        sessionStorage.setItem("jwt", json.accessToken);
-        dispatch({ type: ActionType.USERNAME, payload: json.username });
-        dispatch({
-          type: ActionType.AVATAR,
-          payload:
-            "https://devbrovki-chat-avatars.s3.eu-central-1.amazonaws.com/" +
-            json.username,
-        });
+        const response = (await fetchAuth()) as any;
+        const { accessToken, username, avatar } = response;
+
+        sessionStorage.setItem("jwt", accessToken);
+        dispatch({ type: ActionType.USERNAME, payload: username });
+        dispatch({ type: ActionType.AVATAR, payload: avatar });
       }
     };
 

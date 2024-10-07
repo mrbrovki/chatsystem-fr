@@ -6,7 +6,7 @@ const StyledInputContainer = styled.div<{
   $errorContent: string;
 }>`
   position: relative;
-  height: 5rem;
+  height: 4.5rem;
 
   & > label {
     left: 1rem;
