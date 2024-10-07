@@ -10,7 +10,8 @@ import {
 import InputField from "../components/InputField";
 import { StyledButton, StyledForm } from "../App";
 import { AuthMode, SignupFormData } from "../constants";
-import { doesUserExist, fetchSignup } from "../utils/utils";
+import { fetchSignup } from "../utils/utils";
+import { useUsernameExists } from "../hooks/useUsernameExists";
 
 const StyleSignup = styled.div`
   background-color: #ffffff;
@@ -55,7 +56,6 @@ interface SignupProps {
 
 const Signup = ({ setMode }: SignupProps) => {
   const [username, setUsername] = useState("");
-  const [userExists, setUserExists] = useState(false);
   const [formData, setFormData] = useState<SignupFormData>({
     username: "",
     email: "",
@@ -64,6 +64,8 @@ const Signup = ({ setMode }: SignupProps) => {
   });
   const [isDisabled, setIsDisabled] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
+
+  const { isAvailable } = useUsernameExists(username, "");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -82,35 +84,6 @@ const Signup = ({ setMode }: SignupProps) => {
       setIsDisabled(password !== confirmedPassword);
     }
   }, [formData]);
-
-  useEffect(() => {
-    if (!username) {
-      setUserExists(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    const checkUser = async () => {
-      try {
-        const response = await doesUserExist(username!, signal);
-        setUserExists(response.status === 409);
-        console.log(response.status);
-      } catch {
-        console.log("cancelled");
-      }
-    };
-
-    const debounceTimeout = setTimeout(() => {
-      checkUser();
-    }, 500);
-
-    return () => {
-      clearTimeout(debounceTimeout);
-      controller.abort();
-    };
-  }, [username]);
 
   const signup = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -135,7 +108,7 @@ const Signup = ({ setMode }: SignupProps) => {
           placeholder="Enter username here"
           name="username"
           handleChange={handleUsernameChange}
-          isError={userExists}
+          isError={!isAvailable}
           errorContent="username already exists"
         />
 
@@ -168,12 +141,10 @@ const Signup = ({ setMode }: SignupProps) => {
           handleChange={handleChange}
           name="confirmedPassword"
           isPassword
+          isError={formData.password != formData.confirmedPassword}
+          errorContent="passwords dont match!"
           autoComplete="new-password"
         />
-
-        {formData.password === formData.confirmedPassword || (
-          <div>passwords dont match!</div>
-        )}
 
         <StyledButton
           type="submit"
