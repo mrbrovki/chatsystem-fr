@@ -17,9 +17,10 @@ export interface LoginFormData {
   password: string;
 }
 
-export interface User{
- name: string;
- avatar: string;
+
+export interface AuthResponse{
+  username: string;
+  avatar: string;
 }
 
 export const initState: State = {
