@@ -3,9 +3,9 @@ import { Context } from "../context";
 import styled from "styled-components";
 import InputField from "../components/InputField";
 import { ActionType } from "../context/types";
-import { fetchLogin } from "../utils/utils";
 import { StyledButton, StyledForm } from "../App";
-import { AuthMode } from "../constants";
+import { AuthMode, AuthResponse } from "../constants";
+import { login } from "../utils/requests";
 
 const StyledLogin = styled.div`
   background-color: white;
@@ -36,14 +36,13 @@ export default function Login({ setMode }: LoginProps) {
     password: "",
   });
 
-  const login = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const response = await fetchLogin(formData);
-    const { accessToken, username, avatar } = response;
+    const response = (await login(formData)) as AuthResponse;
+    const { username, avatar } = response;
 
-    sessionStorage.setItem("jwt", accessToken);
     dispatch({ type: ActionType.USERNAME, payload: username });
-
+    console.log(document.cookie);
     if (avatar) {
       dispatch({
         type: ActionType.AVATAR,
@@ -82,10 +81,10 @@ export default function Login({ setMode }: LoginProps) {
           autoComplete="current-password"
         />
 
-        <StyledButton type="submit" onClick={login} $isDark>
+        <StyledButton type="submit" onClick={handleLogin} $isDark>
           Login
         </StyledButton>
-        <StyledButton type="submit" onClick={login}>
+        <StyledButton type="submit" onClick={handleLogin}>
           Demo Login
         </StyledButton>
       </StyledForm>

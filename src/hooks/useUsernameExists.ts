@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { doesUserExist } from "../utils/utils";
+import { doesUserExist } from "../utils/requests";
 
 interface UseUsernameExists{
   isAvailable: boolean | null; 

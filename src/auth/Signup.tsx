@@ -10,8 +10,8 @@ import {
 import InputField from "../components/InputField";
 import { StyledButton, StyledForm } from "../App";
 import { AuthMode, SignupFormData } from "../constants";
-import { fetchSignup } from "../utils/utils";
 import { useUsernameExists } from "../hooks/useUsernameExists";
+import { signup } from "../utils/requests";
 
 const StyleSignup = styled.div`
   background-color: #ffffff;
@@ -85,9 +85,9 @@ const Signup = ({ setMode }: SignupProps) => {
     }
   }, [formData]);
 
-  const signup = async (e: MouseEvent<HTMLButtonElement>) => {
+  const handleSignup = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const response = await fetchSignup({ ...formData, username });
+    const response = await signup({ ...formData, username });
     if (response) {
       setIsChecked(true);
       setTimeout(() => {
@@ -148,7 +148,7 @@ const Signup = ({ setMode }: SignupProps) => {
 
         <StyledButton
           type="submit"
-          onClick={signup}
+          onClick={handleSignup}
           $isDisabled={isDisabled}
           $isDark
         >

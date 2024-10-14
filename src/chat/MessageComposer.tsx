@@ -7,13 +7,11 @@ import {
 } from "react";
 import { Context } from "../context";
 import { ActionType, ChatType, MessageType } from "../context/types";
-import { getChatName, jwtAuthHeader, saveFile, sendFile } from "../utils/utils";
+import { getChatName, saveFile } from "../utils/utils";
 import { Client } from "@stomp/stompjs";
 import styled from "styled-components";
+import { sendFile } from "../utils/stompUtils";
 
-interface PropsType {
-  num: number;
-}
 const StyledSend = styled.div`
   height: 70px;
   background-color: #ffffff;
@@ -62,6 +60,7 @@ const StyledSend = styled.div`
     display: none;
   }
 `;
+type PropsType = object;
 
 const MessageComposer = forwardRef<Client, PropsType>((props, ref) => {
   const stompClientRef = ref as MutableRefObject<Client>;
@@ -91,7 +90,6 @@ const MessageComposer = forwardRef<Client, PropsType>((props, ref) => {
             type: message.type,
             receiverName: currentChat.botName,
           }),
-          headers: jwtAuthHeader(),
         });
         dispatch({
           type: ActionType.ADD_MESSAGE,
@@ -111,7 +109,6 @@ const MessageComposer = forwardRef<Client, PropsType>((props, ref) => {
             type: message.type,
             receiverName: currentChat.name,
           }),
-          headers: jwtAuthHeader(),
         });
         dispatch({
           type: ActionType.ADD_MESSAGE,
@@ -131,7 +128,6 @@ const MessageComposer = forwardRef<Client, PropsType>((props, ref) => {
             type: message.type,
             receiverName: currentChat.username,
           }),
-          headers: jwtAuthHeader(),
         });
         dispatch({
           type: ActionType.ADD_MESSAGE,

@@ -2,6 +2,8 @@ import styled from "styled-components";
 import Sidebar from "./Sidebar";
 import OpenChat from "./OpenChat";
 import Panel from "../panel/Panel";
+import { useRef } from "react";
+import { Client } from "@stomp/stompjs";
 
 const StyledMain = styled.main`
   width: 100%;
@@ -22,12 +24,17 @@ const StyledMain = styled.main`
 `;
 
 export default function ChatApp() {
+  const stompClientRef = useRef<Client | null>(null);
+
+  const closeConnection = () => {
+    stompClientRef.current?.deactivate();
+  };
   return (
     <>
       <StyledMain>
-        <Sidebar />
+        <Sidebar closeConnection={closeConnection} />
         <Panel />
-        <OpenChat />
+        <OpenChat ref={stompClientRef} />
       </StyledMain>
     </>
   );

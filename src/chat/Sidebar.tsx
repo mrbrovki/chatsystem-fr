@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import { ActionType, PanelMode } from "../context/types";
+import { logout } from "../utils/requests";
 
 const ProfilePicture = styled.img`
   width: 80px;
@@ -64,16 +65,24 @@ const StyledEditProfile = styled.div`
   }
 `;
 
-export default function Sidebar() {
+interface SidebarProps {
+  closeConnection: () => void; // Replace `any` with a more specific type if possible
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
   const {
     state: { avatar },
     dispatch,
   } = useContext(Context);
   const [currentSrc, setCurrentSrc] = useState("./public/user-icon.svg");
 
-  const logout = () => {
-    sessionStorage.removeItem("jwt");
-    dispatch({ type: ActionType.RESET, payload: null });
+  const handleLogout = async () => {
+    const response = await logout();
+
+    if (response.status === 204) {
+      closeConnection();
+      dispatch({ type: ActionType.RESET, payload: null });
+    }
   };
 
   const onLogoClick = () => {
@@ -91,7 +100,9 @@ export default function Sidebar() {
         <ProfilePicture src={currentSrc} />
         <p>Profile</p>
       </StyledEditProfile>
-      <LogoutIcon src="./public/logout-icon.svg" onClick={logout} />
+      <LogoutIcon src="./public/logout-icon.svg" onClick={handleLogout} />
     </StyledSidebar>
   );
-}
+};
+
+export default Sidebar;

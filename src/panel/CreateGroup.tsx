@@ -2,11 +2,11 @@ import { ChangeEvent, MouseEvent, useContext, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import InputField from "../components/InputField";
-import { fetchCreateGroup } from "../utils/utils";
 import ChatList from "../chat/ChatList";
 import { ActionType, PanelMode } from "../context/types";
 import { StyledPanelButton } from "./Panel";
 import AvatarUpload from "../components/AvatarUpload";
+import { createGroup } from "../utils/requests";
 
 export const StyledHeader = styled.div`
   display: flex;
@@ -74,7 +74,7 @@ const CreateGroup = () => {
       })
     );
     fd.append("image", formData.image || new Blob());
-    const response = await fetchCreateGroup(fd);
+    const response = await createGroup(fd);
 
     await response.json();
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });

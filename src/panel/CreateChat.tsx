@@ -6,23 +6,23 @@ import {
   useState,
 } from "react";
 import { Context } from "../context";
-import { fetchAddNewFriend, fetchUsers } from "../utils/utils";
 import ChatList from "../chat/ChatList";
 import InputField from "../components/InputField";
 import { ActionType, ChatType, PanelMode, PrivateChat } from "../context/types";
 import { StyledPanelButton } from "./Panel";
+import { addNewFriend, getAllUsers } from "../utils/requests";
 
 const CreateChat = () => {
   const { dispatch } = useContext(Context);
   const [users, setUsers] = useState<PrivateChat[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<PrivateChat[]>([]);
 
-  const addNewFriend = async (e: MouseEvent<HTMLButtonElement>) => {
+  const handleAddNewFriend = async (e: MouseEvent<HTMLButtonElement>) => {
     const newFriendName = e.currentTarget.getAttribute("data-name") as string;
     const avatar = (
       e.currentTarget.firstChild as HTMLInputElement
     ).getAttribute("src") as string;
-    await fetchAddNewFriend(newFriendName);
+    await addNewFriend(newFriendName);
 
     const newPrivateChat = {
       username: newFriendName,
@@ -31,6 +31,14 @@ const CreateChat = () => {
     } as PrivateChat;
 
     dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newPrivateChat });
+    dispatch({
+      type: ActionType.CHAT_MESSAGES,
+      payload: {
+        chatMessages: [],
+        chatType: ChatType.PRIVATE,
+        chatName: newFriendName,
+      },
+    });
     dispatch({ type: ActionType.CURRENT_CHAT, payload: newPrivateChat });
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };
@@ -45,7 +53,7 @@ const CreateChat = () => {
 
   useEffect(() => {
     (async () => {
-      const allUsers = await fetchUsers();
+      const allUsers = await getAllUsers();
       const privateChats = allUsers;
       setUsers(allUsers);
       setFilteredUsers(privateChats);
@@ -92,7 +100,7 @@ const CreateChat = () => {
         handleChange={handleChange}
       />
 
-      <ChatList chats={filteredUsers} handleClick={addNewFriend} />
+      <ChatList chats={filteredUsers} handleClick={handleAddNewFriend} />
     </>
   );
 };

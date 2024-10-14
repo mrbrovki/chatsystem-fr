@@ -1,18 +1,15 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { DragEvent, useContext, useEffect, useRef, useState } from "react";
 import {
-  fetchGroupById,
-  fetchAllChats,
-  fetchFileById,
-  fetchMessages,
-  fetchPrivateChatByName,
-  jwtAuthHeader,
-  fetchUpdateReadStatus,
-  sendFile,
-  getChatName,
-  saveFile,
-} from "../utils/utils";
+  DragEvent,
+  forwardRef,
+  MutableRefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { getChatName, saveFile } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
@@ -29,6 +26,15 @@ import {
 import { Client, Message as StompMessage } from "@stomp/stompjs";
 import ReactPlayer from "react-player";
 import MessageComposer from "./MessageComposer";
+import {
+  updateReadStatus,
+  getGroupById,
+  getPrivateChatByName,
+  getFileById,
+  getMessages,
+  getAllChats,
+} from "../utils/requests";
+import { sendFile } from "../utils/stompUtils";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
@@ -114,9 +120,20 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   }
 `;
 
-export default function OpenChat() {
+type PropsType = object;
+
+const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
+  const stompClientRef = ref as MutableRefObject<Client>;
   const {
-    state: { username, currentChat, panelMode, messages, privateChats },
+    state: {
+      username,
+      currentChat,
+      panelMode,
+      messages,
+      privateChats,
+      groupChats,
+      botChats,
+    },
     dispatch,
   } = useContext(Context);
 
@@ -127,8 +144,7 @@ export default function OpenChat() {
   const [content, setContent] = useState<any>([]);
   const [isDrag, setIsDrag] = useState(false);
 
-  const stompClientRef = useRef<Client | null>(null);
-  const messagesRef = useRef<Messages>();
+  const messagesRef = useRef<Messages>(messages);
 
   const connectToWebsocket = (chats: Chats) => {
     const socket = new WebSocket("ws://localhost:8080/ws");
@@ -143,24 +159,21 @@ export default function OpenChat() {
             onPrivateMessageReceived(
               stompClient,
               messageObj,
-              messagesRef.current!
-            ),
-          jwtAuthHeader()
+              messagesRef.current
+            )
         );
+
         //  subscribe to bot channel
         stompClient.subscribe(
           "/user/" + username + "/bot/messages",
           (messageObj) =>
-            onBotMessageReceived(stompClient, messageObj, messagesRef.current!),
-          jwtAuthHeader()
+            onBotMessageReceived(stompClient, messageObj, messagesRef.current)
         );
         //  subscribe to group channels
         chats[ChatType.GROUP].forEach((chat) => {
           const groupId = chat.id;
           subscribeToGroup(stompClient, groupId);
         });
-
-        initChats(chats);
       },
       debug: (str) => {
         console.log(str);
@@ -190,16 +203,13 @@ export default function OpenChat() {
   };
 
   const subscribeToGroup = async (stompClient: Client, groupId: string) => {
-    stompClient.subscribe(
-      "/group/" + groupId + "/messages",
-      (messageObj) =>
-        onGroupMessageReceived(
-          stompClient,
-          messageObj,
-          messagesRef.current!,
-          groupId
-        ),
-      jwtAuthHeader()
+    stompClient.subscribe("/group/" + groupId + "/messages", (messageObj) =>
+      onGroupMessageReceived(
+        stompClient,
+        messageObj,
+        groupId,
+        messagesRef.current
+      )
     );
   };
 
@@ -232,8 +242,8 @@ export default function OpenChat() {
   const onGroupMessageReceived = (
     stompClient: Client,
     messageObj: StompMessage,
-    messages: Messages,
-    groupId: string
+    groupId: string,
+    messages: Messages
   ) => {
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
@@ -270,7 +280,7 @@ export default function OpenChat() {
       switch (message.type) {
         case MessageType.JOIN: {
           const groupId = message.content as string;
-          const groupChat = await fetchGroupById(groupId);
+          const groupChat = await getGroupById(groupId);
           subscribeToGroup(stompClient, groupId);
           dispatch({ type: ActionType.ADD_GROUP_CHAT, payload: groupChat });
 
@@ -288,7 +298,7 @@ export default function OpenChat() {
         case MessageType.TEXT: {
           senderName = message.senderName;
           if (!messages[ChatType.PRIVATE][message.senderName]) {
-            const newChat = await fetchPrivateChatByName(message.senderName);
+            const newChat = await getPrivateChatByName(message.senderName);
             newChat.unreadCount = 0;
             dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
           }
@@ -312,7 +322,7 @@ export default function OpenChat() {
     } else {
       senderName = messageObj.headers["sender"];
       if (!messages[ChatType.PRIVATE][senderName]) {
-        const newChat = await fetchPrivateChatByName(senderName);
+        const newChat = await getPrivateChatByName(senderName);
         dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
       }
 
@@ -338,13 +348,12 @@ export default function OpenChat() {
   };
 
   const loadMessages = async () => {
-    const messages = await fetchMessages();
-    messagesRef.current = messages;
+    const messages = await getMessages();
     dispatch({ type: ActionType.MESSAGES, payload: messages });
+    return messages;
   };
 
-  const loadFiles = async () => {
-    const messages = messagesRef.current!;
+  const loadFiles = async (messages: Messages) => {
     for (const key in messages) {
       const chatType = key as keyof Messages;
 
@@ -360,7 +369,7 @@ export default function OpenChat() {
                 chatType: chatType,
                 senderName: message.senderName,
               };
-              const blob = await fetchFileById(message.content, params);
+              const blob = await getFileById(message.content, params);
               const url = URL.createObjectURL(blob);
               const newMessage = { ...message, content: url };
               return newMessage;
@@ -424,16 +433,117 @@ export default function OpenChat() {
   };
 
   useEffect(() => {
-    if (!messages || !currentChat) return;
-    let chatMessages;
+    const fetchChats = async () => {
+      try {
+        const chats = await getAllChats();
+        connectToWebsocket(chats);
+        initChats(chats);
+      } catch (error) {
+        console.error("Error fetching chats:", error);
+      }
+    };
 
+    const loadMessagesAndFiles = async () => {
+      try {
+        const loadedMessages = await loadMessages();
+        loadFiles(loadedMessages);
+      } catch (error) {
+        console.error("Error loading messages or files:", error);
+      }
+    };
+
+    fetchChats();
+    loadMessagesAndFiles();
+  }, []);
+
+  useEffect(() => {
+    if (stompClientRef.current) {
+      //  subscribe to private channel
+      stompClientRef.current.subscribe(
+        "/user/" + username + "/private/messages",
+        (messageObj) =>
+          onPrivateMessageReceived(
+            stompClientRef.current,
+            messageObj,
+            messagesRef.current
+          )
+      );
+
+      //  subscribe to bot channel
+      stompClientRef.current.subscribe(
+        "/user/" + username + "/bot/messages",
+        (messageObj) =>
+          onBotMessageReceived(
+            stompClientRef.current,
+            messageObj,
+            messagesRef.current
+          )
+      );
+    }
+
+    return () => {
+      if (stompClientRef.current) {
+        stompClientRef.current.unsubscribe(
+          "/user/" + username + "/private/messages"
+        );
+        stompClientRef.current.unsubscribe(
+          "/user/" + username + "/bot/messages"
+        );
+      }
+
+      const newMessages: any = {};
+      for (const key in messagesRef.current) {
+        const chatType = key as keyof Messages;
+        newMessages[chatType] = {};
+        for (const id in messagesRef.current[chatType]) {
+          const chatMessages = messagesRef.current[chatType][id];
+          const newChatMessages = chatMessages.map((message: Message) => {
+            const newMessage = { ...message } as Message;
+            if (newMessage.senderName === username) {
+              newMessage.senderName = "";
+            }
+            return newMessage;
+          });
+          newMessages[chatType][id] = newChatMessages;
+        }
+      }
+      dispatch({
+        type: ActionType.MESSAGES,
+        payload: newMessages as Messages,
+      });
+    };
+  }, [username]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    if (!currentChat) return;
     switch (currentChat.type) {
       case ChatType.PRIVATE:
         setName(currentChat.username);
         setImageSrc(currentChat.avatar);
+        break;
+      case ChatType.GROUP:
+        setName(currentChat.name);
+        setImageSrc(currentChat.image);
+        break;
 
+      case ChatType.BOT:
+        setName(currentChat.botName);
+        setImageSrc(currentChat.avatar);
+        break;
+    }
+  }, [currentChat]);
+
+  useEffect(() => {
+    if (!currentChat) return;
+    let chatMessages;
+
+    switch (currentChat.type) {
+      case ChatType.PRIVATE: {
         chatMessages = messages[currentChat.type][currentChat.username];
-        if (!chatMessages) return;
         dispatch({
           type: ActionType.PRIVATE_CHATS,
           payload: updateReadCount(
@@ -443,52 +553,45 @@ export default function OpenChat() {
             0
           ),
         });
-
-        fetchUpdateReadStatus(currentChat.type, currentChat.username);
+        updateReadStatus(currentChat.type, currentChat.username);
         break;
-      case ChatType.GROUP:
-        setName(currentChat.name);
-        setImageSrc(currentChat.image);
-
+      }
+      case ChatType.GROUP: {
         chatMessages = messages[currentChat.type][currentChat.id];
-        if (!chatMessages) return;
-
         dispatch({
           type: ActionType.GROUP_CHATS,
-          payload: updateReadCount(privateChats, "id", currentChat.id, 0),
+          payload: updateReadCount(groupChats, "id", currentChat.id, 0),
         });
 
-        fetchUpdateReadStatus(currentChat.type, currentChat.name);
+        updateReadStatus(currentChat.type, currentChat.name);
         break;
-      case ChatType.BOT:
-        setName(currentChat.botName);
-        setImageSrc(currentChat.avatar);
+      }
+      case ChatType.BOT: {
         chatMessages = messages[currentChat.type][currentChat.botName];
-        if (!chatMessages) return;
-
         dispatch({
           type: ActionType.BOT_CHATS,
-          payload: updateReadCount(
-            privateChats,
-            "botName",
-            currentChat.botName,
-            0
-          ),
+          payload: updateReadCount(botChats, "botName", currentChat.botName, 0),
         });
 
-        fetchUpdateReadStatus(currentChat.type, currentChat.botName);
+        updateReadStatus(currentChat.type, currentChat.botName);
         break;
+      }
     }
+
     chatMessages = chatMessages ? chatMessages : [];
+
     const chatContent = chatMessages.map((chatMessage) => {
       const date = new Date(chatMessage.timestamp);
+      const senderName = chatMessage.senderName;
+      const isSender = !senderName || senderName === username;
+
       switch (chatMessage.type) {
         case MessageType.TEXT: {
           return (
             <StyledMessage
-              key={chatMessage.senderName + chatMessage.timestamp}
+              key={senderName + chatMessage.timestamp}
               $isText={true}
-              $isSender={chatMessage.senderName === username}
+              $isSender={isSender}
             >
               <div className="content">{chatMessage.content}</div>
               <span>{date.getHours() + ":" + date.getMinutes()}</span>
@@ -500,8 +603,8 @@ export default function OpenChat() {
         case MessageType.IMAGE_PNG: {
           return (
             <StyledMessage
-              key={chatMessage.senderName + chatMessage.timestamp}
-              $isSender={chatMessage.senderName === username}
+              key={senderName + chatMessage.timestamp}
+              $isSender={isSender}
               $isText={false}
             >
               <div className="content">
@@ -514,8 +617,8 @@ export default function OpenChat() {
         case MessageType.APPLICATION_PDF: {
           return (
             <StyledMessage
-              key={chatMessage.senderName + chatMessage.timestamp}
-              $isSender={chatMessage.senderName === username}
+              key={senderName + chatMessage.timestamp}
+              $isSender={isSender}
               $isText={false}
             >
               <div className="content">
@@ -533,8 +636,8 @@ export default function OpenChat() {
         case MessageType.VIDEO_MP4:
           return (
             <StyledMessage
-              key={chatMessage.senderName + chatMessage.timestamp}
-              $isSender={chatMessage.senderName === username}
+              key={senderName + chatMessage.timestamp}
+              $isSender={isSender}
               $isText={false}
             >
               <ReactPlayer
@@ -552,34 +655,7 @@ export default function OpenChat() {
       }
     });
     setContent(chatContent);
-  }, [messages, currentChat]);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const chats = await fetchAllChats();
-        connectToWebsocket(chats);
-      } catch (error) {
-        console.error("Error fetching chats:", error);
-      }
-    };
-
-    const loadMessagesAndFiles = async () => {
-      try {
-        await loadMessages();
-        loadFiles();
-      } catch (error) {
-        console.error("Error loading messages or files:", error);
-      }
-    };
-
-    fetchChats();
-    loadMessagesAndFiles();
-  }, []);
+  }, [currentChat, messages, username]);
 
   return (
     <StyledChat
@@ -591,15 +667,17 @@ export default function OpenChat() {
       onClick={onChatFocus}
     >
       {currentChat && (
-        <StyledChatHeader>
-          <StyledAvatar src={imageSrc} />
-          <div>{name}</div>
-        </StyledChatHeader>
+        <>
+          <StyledChatHeader>
+            <StyledAvatar src={imageSrc} />
+            <div>{name}</div>
+          </StyledChatHeader>
+          <section>{content}</section>
+
+          <MessageComposer ref={stompClientRef} />
+        </>
       )}
-
-      <section>{content}</section>
-
-      <MessageComposer num={0} ref={stompClientRef} />
     </StyledChat>
   );
-}
+});
+export default OpenChat;

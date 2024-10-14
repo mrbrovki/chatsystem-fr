@@ -7,13 +7,14 @@ import {
 } from "react";
 import InputField from "../components/InputField";
 import { Context } from "../context";
-import { fetchEditUser } from "../utils/utils";
 import { StyledHeader } from "./CreateGroup";
 import { ActionType, PanelMode } from "../context/types";
 import { StyledButton, StyledForm } from "../App";
 import { StyledPanelButton } from "./Panel";
 import AvatarUpload from "../components/AvatarUpload";
 import { useUsernameExists } from "../hooks/useUsernameExists";
+import { editUser } from "../utils/requests";
+import { AuthResponse } from "../constants";
 
 interface FormData {
   username: string;
@@ -79,9 +80,8 @@ const EditProfile = () => {
 
     back();
     dispatch({ type: ActionType.AVATAR, payload: "./public/user-icon.svg" });
-    const { accessToken, username, avatar } = await fetchEditUser(fd);
+    const { username, avatar } = (await editUser(fd)) as AuthResponse;
 
-    sessionStorage.setItem("jwt", accessToken);
     dispatch({ type: ActionType.USERNAME, payload: username });
 
     if (avatar) {

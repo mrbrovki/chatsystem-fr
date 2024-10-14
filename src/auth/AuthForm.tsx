@@ -4,8 +4,8 @@ import { Context } from "../context";
 import Signup from "./Signup.tsx";
 import Login from "./Login.tsx";
 import { ActionType } from "../context/types";
-import { fetchAuth } from "../utils/utils";
-import { AuthMode } from "../constants";
+import { AuthMode, AuthResponse } from "../constants";
+import { authenticate } from "../utils/requests.ts";
 
 const StyledAuth = styled.main`
   background-color: grey;
@@ -54,19 +54,13 @@ const AuthForm = () => {
   const { dispatch } = useContext(Context);
 
   useEffect(() => {
-    const authenticate = async () => {
-      const token = sessionStorage.getItem("jwt");
-      if (token) {
-        const response = (await fetchAuth()) as any;
-        const { accessToken, username, avatar } = response;
+    (async () => {
+      const response = (await authenticate()) as AuthResponse;
+      const { username, avatar } = response;
 
-        sessionStorage.setItem("jwt", accessToken);
-        dispatch({ type: ActionType.USERNAME, payload: username });
-        dispatch({ type: ActionType.AVATAR, payload: avatar });
-      }
-    };
-
-    authenticate();
+      dispatch({ type: ActionType.USERNAME, payload: username });
+      dispatch({ type: ActionType.AVATAR, payload: avatar });
+    })();
   }, [dispatch]);
 
   return (

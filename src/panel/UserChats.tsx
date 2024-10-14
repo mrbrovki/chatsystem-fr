@@ -7,9 +7,11 @@ import {
   Chat,
   ChatType,
   Message,
+  Messages,
   PanelMode,
 } from "../context/types";
 import { getChatName } from "../utils/utils";
+import { getBotChats, getGroupById, getPrivateChats } from "../utils/requests";
 
 const StyledHeader = styled.header`
   & > h1 {
@@ -28,50 +30,97 @@ export default function UserChats() {
   } = useContext(Context);
   const [chats, setChats] = useState<Chat[]>([]);
 
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
-    const imageSrc = e.currentTarget.firstElementChild?.getAttribute(
-      "src"
-    ) as string;
+  const handleClick = async (e: MouseEvent<HTMLButtonElement>) => {
     const name = e.currentTarget.getAttribute("data-name") as string;
-
     switch (e.currentTarget.getAttribute("data-type")) {
-      case ChatType.GROUP.toString():
-        dispatch({
-          type: ActionType.CURRENT_CHAT,
-          payload: {
-            id: e.currentTarget.getAttribute("data-id")!,
-            name: name,
-            image: imageSrc,
-            type: ChatType.GROUP,
-            unreadCount: 0,
-            lastReadTime: 0,
-          },
-        });
+      case ChatType.GROUP:
+        {
+          const groupId = e.currentTarget.getAttribute("data-id")!;
+          const newGroupChat = await getGroupById(groupId);
+          const newGroupChats = groupChats.map((groupChat) => {
+            if (groupChat.id === newGroupChat.id) {
+              return groupChat;
+            } else {
+              return groupChat;
+            }
+          });
+          dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
+
+          dispatch({
+            type: ActionType.CURRENT_CHAT,
+            payload: {
+              id: newGroupChat.id,
+              name: newGroupChat.name,
+              image: newGroupChat.image,
+              type: ChatType.GROUP,
+              unreadCount: 0,
+              lastReadTime: 0,
+            },
+          });
+        }
         break;
-      case ChatType.PRIVATE.toString():
+      case ChatType.PRIVATE: {
+        const index = privateChats.findIndex((chat) => chat.username === name)!;
+        const newPrivateChats = await getPrivateChats();
+        const newPrivateChat = newPrivateChats[index];
+
+        dispatch({
+          type: ActionType.PRIVATE_CHATS,
+          payload: newPrivateChats,
+        });
+
+        if (newPrivateChat.username != name) {
+          const newPrivateMessages = {
+            ...messages[ChatType.PRIVATE],
+            [newPrivateChat.username]: messages[ChatType.PRIVATE][name],
+          };
+          delete newPrivateMessages[name];
+
+          dispatch({
+            type: ActionType.MESSAGES,
+            payload: {
+              ...messages,
+              [ChatType.PRIVATE]: newPrivateMessages,
+            },
+          });
+        }
+
         dispatch({
           type: ActionType.CURRENT_CHAT,
           payload: {
-            username: name,
-            avatar: imageSrc,
+            username: newPrivateChat.username,
+            avatar: newPrivateChat.avatar,
             type: ChatType.PRIVATE,
             unreadCount: 0,
             lastReadTime: 0,
           },
         });
         break;
-      case ChatType.BOT.toString():
+      }
+      case ChatType.BOT: {
+        const index = botChats.findIndex(
+          (botChat) => botChat.botName === name
+        )!;
+        const newBotChats = await getBotChats();
+        const newBotChat = newBotChats[index];
+
+        dispatch({
+          type: ActionType.BOT_CHATS,
+          payload: newBotChats,
+        });
+
         dispatch({
           type: ActionType.CURRENT_CHAT,
           payload: {
-            botName: name,
-            avatar: imageSrc,
+            botName: newBotChat.botName,
+            avatar: newBotChat.avatar,
             type: ChatType.BOT,
             unreadCount: 0,
             lastReadTime: 0,
           },
         });
         break;
+      }
     }
   };
 
@@ -110,11 +159,13 @@ export default function UserChats() {
   };
 
   const countUnreadMessages = (
+    messages: Messages,
     chatType: ChatType,
     chatName: string,
     lastReadTime: number
   ) => {
     let counter = 0;
+
     const chatMessages = messages[chatType][chatName];
     if (chatMessages) {
       counter =
@@ -129,6 +180,7 @@ export default function UserChats() {
     allChats.forEach((chat) => {
       const chatName = getChatName(chat);
       chat.unreadCount = countUnreadMessages(
+        messages,
         chat.type,
         chatName,
         chat.lastReadTime
