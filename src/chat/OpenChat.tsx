@@ -122,7 +122,7 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
 
 type PropsType = object;
 
-const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
+const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   const stompClientRef = ref as MutableRefObject<Client>;
   const {
     state: {
@@ -214,9 +214,9 @@ const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
   };
 
   const onBotMessageReceived = async (
-    stompClient: Client,
+    _stompClient: Client,
     messageObj: StompMessage,
-    messages: Messages
+    _messages: Messages
   ) => {
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
@@ -240,10 +240,10 @@ const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
   };
 
   const onGroupMessageReceived = (
-    stompClient: Client,
+    _stompClient: Client,
     messageObj: StompMessage,
     groupId: string,
-    messages: Messages
+    _messages: Messages
   ) => {
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;

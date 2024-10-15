@@ -62,7 +62,7 @@ const StyledSend = styled.div`
 `;
 type PropsType = object;
 
-const MessageComposer = forwardRef<Client, PropsType>((props, ref) => {
+const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
   const stompClientRef = ref as MutableRefObject<Client>;
   const {
     state: { username, currentChat },

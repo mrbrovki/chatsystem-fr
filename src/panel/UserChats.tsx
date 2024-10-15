@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { MouseEvent, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
