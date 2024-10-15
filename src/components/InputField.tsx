@@ -1,4 +1,4 @@
-import { ChangeEventHandler, useState } from "react";
+import { ChangeEventHandler, forwardRef, useState } from "react";
 import styled, { css } from "styled-components";
 
 const StyledInputContainer = styled.div<{
@@ -72,7 +72,7 @@ interface InputProps {
   errorContent?: string;
 }
 
-const InputField = (props: InputProps) => {
+const InputField = forwardRef((props: InputProps, ref: any) => {
   const [type, setType] = useState(props.type);
 
   const togglePassword = () => {
@@ -110,10 +110,11 @@ const InputField = (props: InputProps) => {
         onChange={props.handleChange}
         autoComplete={props.autoComplete}
         value={props.value}
+        ref={ref}
       />
       {props.isPassword && eyeIcon}
     </StyledInputContainer>
   );
-};
+});
 
 export default InputField;

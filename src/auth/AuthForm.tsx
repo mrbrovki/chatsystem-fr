@@ -52,6 +52,7 @@ const StyledLogoContainer = styled.div<{ $mode: AuthMode }>`
 const AuthForm = () => {
   const [mode, setMode] = useState(AuthMode.LOGIN);
   const { dispatch } = useContext(Context);
+  const [cachedUsername, setCachedUsername] = useState<string>();
 
   useEffect(() => {
     (async () => {
@@ -65,8 +66,8 @@ const AuthForm = () => {
 
   return (
     <StyledAuth>
-      <Login setMode={setMode} />
-      <Signup setMode={setMode} />
+      <Login setMode={setMode} cachedUsername={cachedUsername} />
+      <Signup setMode={setMode} setCachedUsername={setCachedUsername} />
       <StyledLogoContainer $mode={mode}>
         <img src="./public/logo.svg" width={200} height={200} />
       </StyledLogoContainer>

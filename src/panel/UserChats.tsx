@@ -11,7 +11,12 @@ import {
   PanelMode,
 } from "../context/types";
 import { getChatName } from "../utils/utils";
-import { getBotChats, getGroupById, getPrivateChats } from "../utils/requests";
+import {
+  getBotChats,
+  getGroupById,
+  getPrivateChatByName,
+  getPrivateChats,
+} from "../utils/requests";
 
 const StyledHeader = styled.header`
   & > h1 {
@@ -60,16 +65,21 @@ export default function UserChats() {
         }
         break;
       case ChatType.PRIVATE: {
-        const index = privateChats.findIndex((chat) => chat.username === name)!;
-        const newPrivateChats = await getPrivateChats();
-        const newPrivateChat = newPrivateChats[index];
+        let newPrivateChat;
+        try {
+          newPrivateChat = await getPrivateChatByName(name);
+        } catch {
+          const index = privateChats.findIndex(
+            (chat) => chat.username === name
+          )!;
+          const newPrivateChats = await getPrivateChats();
+          newPrivateChat = newPrivateChats[index];
 
-        dispatch({
-          type: ActionType.PRIVATE_CHATS,
-          payload: newPrivateChats,
-        });
+          dispatch({
+            type: ActionType.PRIVATE_CHATS,
+            payload: newPrivateChats,
+          });
 
-        if (newPrivateChat.username != name) {
           const newPrivateMessages = {
             ...messages[ChatType.PRIVATE],
             [newPrivateChat.username]: messages[ChatType.PRIVATE][name],
@@ -175,16 +185,18 @@ export default function UserChats() {
   };
 
   useEffect(() => {
-    const allChats = [...privateChats, ...groupChats, ...botChats] as Chat[];
+    let allChats = [...privateChats, ...groupChats, ...botChats] as Chat[];
 
-    allChats.forEach((chat) => {
+    allChats = allChats.map((chat) => {
       const chatName = getChatName(chat);
-      chat.unreadCount = countUnreadMessages(
+      const newChat = { ...chat };
+      newChat.unreadCount = countUnreadMessages(
         messages,
         chat.type,
         chatName,
         chat.lastReadTime
       );
+      return newChat;
     });
 
     const sortedChats = allChats.sort((chat1: Chat, chat2: Chat) => {

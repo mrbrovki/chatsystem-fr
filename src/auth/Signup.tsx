@@ -52,9 +52,10 @@ const StyledCheck = styled.img<{ $isChecked: boolean }>`
 
 interface SignupProps {
   setMode: Dispatch<SetStateAction<AuthMode>>;
+  setCachedUsername: Dispatch<SetStateAction<string | undefined>>;
 }
 
-const Signup = ({ setMode }: SignupProps) => {
+const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
   const [username, setUsername] = useState("");
   const [formData, setFormData] = useState<SignupFormData>({
     username: "",
@@ -89,6 +90,7 @@ const Signup = ({ setMode }: SignupProps) => {
     e.preventDefault();
     const response = await signup({ ...formData, username });
     if (response) {
+      setCachedUsername(username);
       setIsChecked(true);
       setTimeout(() => {
         setMode(AuthMode.LOGIN);

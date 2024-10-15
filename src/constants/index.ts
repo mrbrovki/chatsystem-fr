@@ -38,9 +38,9 @@ export const initState: State = {
   }
 };
 
-export const BASE_URL = "http://localhost:8080";
-export const MESSAGES_ROUTE = "/api/v2/messages";
-export const FILES_ROUTE = MESSAGES_ROUTE + "/files"
-export const CHATS_ROUTE = "/api/v3/chats";
-export const AUTH_ROUTE = "/api/v3/auth";
-export const USERS_ROUTE = "/api/v3/users";
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const MESSAGES_ROUTE = import.meta.env.VITE_API_MESSAGES_ROUTE;
+export const FILES_ROUTE = import.meta.env.VITE_API_FILES_ROUTE
+export const CHATS_ROUTE = import.meta.env.VITE_API_CHATS_ROUTE;
+export const AUTH_ROUTE = import.meta.env.VITE_API_AUTH_ROUTE;
+export const USERS_ROUTE = import.meta.env.VITE_API_USERS_ROUTE;

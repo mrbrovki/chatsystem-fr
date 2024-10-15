@@ -29,10 +29,10 @@ import MessageComposer from "./MessageComposer";
 import {
   updateReadStatus,
   getGroupById,
-  getPrivateChatByName,
   getFileById,
   getMessages,
   getAllChats,
+  getPrivateChats,
 } from "../utils/requests";
 import { sendFile } from "../utils/stompUtils";
 
@@ -298,9 +298,8 @@ const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
         case MessageType.TEXT: {
           senderName = message.senderName;
           if (!messages[ChatType.PRIVATE][message.senderName]) {
-            const newChat = await getPrivateChatByName(message.senderName);
-            newChat.unreadCount = 0;
-            dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
+            const newChats = await getPrivateChats();
+            dispatch({ type: ActionType.PRIVATE_CHATS, payload: newChats });
           }
 
           dispatch({
@@ -322,8 +321,8 @@ const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
     } else {
       senderName = messageObj.headers["sender"];
       if (!messages[ChatType.PRIVATE][senderName]) {
-        const newChat = await getPrivateChatByName(senderName);
-        dispatch({ type: ActionType.ADD_PRIVATE_CHAT, payload: newChat });
+        const newChats = await getPrivateChats();
+        dispatch({ type: ActionType.PRIVATE_CHATS, payload: newChats });
       }
 
       dispatch({
@@ -483,12 +482,14 @@ const OpenChat = forwardRef<Client, PropsType>((props, ref) => {
 
     return () => {
       if (stompClientRef.current) {
-        stompClientRef.current.unsubscribe(
-          "/user/" + username + "/private/messages"
-        );
-        stompClientRef.current.unsubscribe(
-          "/user/" + username + "/bot/messages"
-        );
+        if (stompClientRef.current.active) {
+          stompClientRef.current.unsubscribe(
+            "/user/" + username + "/private/messages"
+          );
+          stompClientRef.current.unsubscribe(
+            "/user/" + username + "/bot/messages"
+          );
+        }
       }
 
       const newMessages: any = {};

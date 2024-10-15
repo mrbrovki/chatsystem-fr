@@ -1,4 +1,11 @@
-import { Dispatch, SetStateAction, useContext, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Context } from "../context";
 import styled from "styled-components";
 import InputField from "../components/InputField";
@@ -26,11 +33,12 @@ const StyledLogin = styled.div`
 
 interface LoginProps {
   setMode: Dispatch<SetStateAction<AuthMode>>;
+  cachedUsername: string | undefined;
 }
 
-export default function Login({ setMode }: LoginProps) {
+export default function Login({ setMode, cachedUsername }: LoginProps) {
   const { dispatch } = useContext(Context);
-
+  const usernameRef = useRef<HTMLInputElement>();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -51,6 +59,14 @@ export default function Login({ setMode }: LoginProps) {
     }
   };
 
+  useEffect(() => {
+    if (!cachedUsername) return;
+    setFormData({ username: cachedUsername, password: "" });
+    if (usernameRef.current) {
+      usernameRef.current.value = cachedUsername;
+    }
+  }, [cachedUsername]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -68,6 +84,7 @@ export default function Login({ setMode }: LoginProps) {
           handleChange={handleChange}
           name="username"
           autoComplete="off"
+          ref={usernameRef}
         />
 
         <InputField
