@@ -38,9 +38,7 @@ const EditProfile = () => {
 
   const { isAvailable } = useUsernameExists(newUsername, username);
 
-  const [currentSrc, setCurrentSrc] = useState(
-    avatar || "./public/user-icon.svg"
-  );
+  const [currentSrc, setCurrentSrc] = useState(avatar || "/user-icon.svg");
 
   const back = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
@@ -79,7 +77,7 @@ const EditProfile = () => {
     fd.append("avatar", formData.avatar || new Blob());
 
     back();
-    dispatch({ type: ActionType.AVATAR, payload: "./public/user-icon.svg" });
+    dispatch({ type: ActionType.AVATAR, payload: "/user-icon.svg" });
     const { username, avatar } = (await editUser(fd)) as AuthResponse;
 
     dispatch({ type: ActionType.USERNAME, payload: username });

@@ -211,7 +211,7 @@ export default function UserChats() {
       <StyledHeader>
         <h1>Chat</h1>
         <img
-          src="./public/edit-icon.svg"
+          src="/edit-icon.svg"
           width={30}
           height={30}
           onClick={switchToCreateMode}

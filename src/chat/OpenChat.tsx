@@ -624,7 +624,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
             >
               <div className="content">
                 <a href={chatMessage.content} target="_blank">
-                  <img src={"./public/pdf-icon.svg"} style={{ padding: 5 }} />
+                  <img src={"/pdf-icon.svg"} style={{ padding: 5 }} />
                 </a>
               </div>
               <span>{date.getHours() + ":" + date.getMinutes()}</span>

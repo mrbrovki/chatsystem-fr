@@ -82,14 +82,14 @@ const InputField = forwardRef((props: InputProps, ref: any) => {
   const eyeIcon =
     type == "password" ? (
       <img
-        src="./public/eye-closed-icon.svg"
+        src="/eye-closed-icon.svg"
         onClick={togglePassword}
         width={20}
         height={20}
       />
     ) : (
       <img
-        src="./public/eye-open-icon.svg"
+        src="/eye-open-icon.svg"
         onClick={togglePassword}
         width={20}
         height={20}

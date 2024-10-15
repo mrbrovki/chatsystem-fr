@@ -167,7 +167,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           Login
         </span>
       </p>
-      <StyledCheck src="./public/check-icon.svg" $isChecked={isChecked} />
+      <StyledCheck src="/check-icon.svg" $isChecked={isChecked} />
     </StyleSignup>
   );
 };

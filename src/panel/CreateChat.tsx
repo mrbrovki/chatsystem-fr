@@ -88,7 +88,7 @@ const CreateChat = () => {
         $color="#000"
         $hoverColor="#194b68"
       >
-        <img src="./public/group-icon.svg" width={30} height={30} />
+        <img src="/group-icon.svg" width={30} height={30} />
         <span>Create Group</span>
       </StyledPanelButton>
 

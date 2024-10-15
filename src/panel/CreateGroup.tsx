@@ -108,7 +108,7 @@ const CreateGroup = () => {
         htmlFor="create-group-image"
         name="image"
         id="create-group-image"
-        currentSrc={"./public/group-icon.svg"}
+        currentSrc={"/group-icon.svg"}
         handleChange={handleChange}
       />
 

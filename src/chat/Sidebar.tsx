@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
     state: { avatar },
     dispatch,
   } = useContext(Context);
-  const [currentSrc, setCurrentSrc] = useState("./public/user-icon.svg");
+  const [currentSrc, setCurrentSrc] = useState("/user-icon.svg");
 
   const handleLogout = async () => {
     const response = await logout();
@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
         <ProfilePicture src={currentSrc} />
         <p>Profile</p>
       </StyledEditProfile>
-      <LogoutIcon src="./public/logout-icon.svg" onClick={handleLogout} />
+      <LogoutIcon src="/logout-icon.svg" onClick={handleLogout} />
     </StyledSidebar>
   );
 };

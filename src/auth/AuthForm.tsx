@@ -69,7 +69,7 @@ const AuthForm = () => {
       <Login setMode={setMode} cachedUsername={cachedUsername} />
       <Signup setMode={setMode} setCachedUsername={setCachedUsername} />
       <StyledLogoContainer $mode={mode}>
-        <img src="./public/logo.svg" width={200} height={200} />
+        <img src="/logo.svg" width={200} height={200} />
       </StyledLogoContainer>
     </StyledAuth>
   );
