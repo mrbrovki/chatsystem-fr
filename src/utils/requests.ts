@@ -98,6 +98,18 @@ export const login = async (formData: LoginFormData) => {
   return response.json();
 }
 
+export const demoLogin = async () => {
+  const url = `${BASE_URL}${AUTH_ROUTE}/demo`;
+  const options = {
+    method: HttpMethod.POST,
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  }
+  const response = await fetchRequest(url, options);
+  return response.json();
+}
+
 export const signup = async (formData: SignupFormData) => {
   const url = `${BASE_URL}${AUTH_ROUTE}/signup`;
     const { username, email, password } = formData;

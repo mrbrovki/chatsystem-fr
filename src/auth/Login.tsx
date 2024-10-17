@@ -12,7 +12,7 @@ import InputField from "../components/InputField";
 import { ActionType } from "../context/types";
 import { StyledButton, StyledForm } from "../App";
 import { AuthMode, AuthResponse } from "../constants";
-import { login } from "../utils/requests";
+import { demoLogin, login } from "../utils/requests";
 
 const StyledLogin = styled.div`
   background-color: white;
@@ -71,6 +71,20 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+  const handleDemoLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const response = (await demoLogin()) as AuthResponse;
+    const { username, avatar } = response;
+
+    dispatch({ type: ActionType.USERNAME, payload: username });
+    console.log(document.cookie);
+    if (avatar) {
+      dispatch({
+        type: ActionType.AVATAR,
+        payload: `${avatar}?timestamp=${Date.now()}`,
+      });
+    }
+  };
 
   return (
     <StyledLogin>
@@ -101,7 +115,7 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
         <StyledButton type="submit" onClick={handleLogin} $isDark>
           Login
         </StyledButton>
-        <StyledButton type="submit" onClick={handleLogin}>
+        <StyledButton type="submit" onClick={handleDemoLogin}>
           Demo Login
         </StyledButton>
       </StyledForm>
