@@ -9,17 +9,29 @@ const StyledMain = styled.main`
   width: 100%;
   height: 100vh;
   background-color: #d9d9d9;
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-  padding: 0 1rem;
-  justify-content: space-between;
-  gap: 20px;
 
-  & > * {
-    height: 95%;
-    border-radius: var(--components-border-radius);
-    background-color: #fff;
+  @media only screen and (min-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    padding: 0 1rem;
+    justify-content: space-between;
+    gap: 20px;
+
+    & > * {
+      height: 95%;
+      border-radius: var(--components-border-radius);
+      background-color: #fff;
+    }
+  }
+
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    & > * {
+      height: 100%;
+      background-color: #fff;
+    }
   }
 `;
 

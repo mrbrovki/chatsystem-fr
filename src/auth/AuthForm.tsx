@@ -7,7 +7,33 @@ import { ActionType } from "../context/types";
 import { AuthMode, AuthResponse } from "../constants";
 import { authenticate } from "../utils/requests.ts";
 
-const StyledAuth = styled.main`
+const StyledLogoContainer = styled.div<{ $mode: AuthMode }>`
+  background: linear-gradient(to top, #43a5dc, #ff7bac);
+  position: absolute;
+  height: 100%;
+  width: 50%;
+  transform: translate(100%);
+  transition: transform 0.3s, border-radius 0.3s;
+
+  & > StyledLogoContainer {
+    display: none;
+  }
+  ${({ $mode }) => {
+    switch ($mode) {
+      case AuthMode.LOGIN:
+        return css`
+          border-radius: 40px 0 0 40px;
+        `;
+      case AuthMode.SIGNUP:
+        return css`
+          transform: translateX(0);
+          border-radius: 0 40px 40px 0;
+        `;
+    }
+  }}
+`;
+
+const StyledAuth = styled.main<{ $mode: AuthMode }>`
   background-color: grey;
   height: 100vh;
   width: 100%;
@@ -24,29 +50,30 @@ const StyledAuth = styled.main`
     gap: 16px;
     padding: 0 50px;
   }
-`;
 
-const StyledLogoContainer = styled.div<{ $mode: AuthMode }>`
-  background: linear-gradient(to top, #43a5dc, #ff7bac);
-  position: absolute;
-  height: 100%;
-  width: 50%;
-  transform: translate(100%);
-  transition: transform 0.3s, border-radius 0.3s;
-
-  ${({ $mode }) => {
-    switch ($mode) {
-      case AuthMode.LOGIN:
-        return css`
-          border-radius: 40px 0 0 40px;
-        `;
-      case AuthMode.SIGNUP:
-        return css`
-          transform: translateX(0);
-          border-radius: 0 40px 40px 0;
-        `;
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    ${StyledLogoContainer} {
+      display: none;
     }
-  }}
+
+    ${({ $mode }) => {
+      switch ($mode) {
+        case AuthMode.LOGIN:
+          return css`
+            & > div:nth-of-type(2) {
+              display: none;
+            }
+          `;
+        case AuthMode.SIGNUP:
+          return css`
+            & > div:first-of-type {
+              display: none;
+            }
+          `;
+      }
+    }}
+  }
 `;
 
 const AuthForm = () => {
@@ -65,7 +92,7 @@ const AuthForm = () => {
   }, [dispatch]);
 
   return (
-    <StyledAuth>
+    <StyledAuth $mode={mode}>
       <Login setMode={setMode} cachedUsername={cachedUsername} />
       <Signup setMode={setMode} setCachedUsername={setCachedUsername} />
       <StyledLogoContainer $mode={mode}>

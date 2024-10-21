@@ -26,6 +26,7 @@ const CreateGroup = () => {
     dispatch,
   } = useContext(Context);
 
+  const [currentSrc, setCurrentSrc] = useState("/group-icon.svg");
   const [formData, setFormData] = useState<FormData>({
     name: "",
     memberNames: [],
@@ -37,6 +38,10 @@ const CreateGroup = () => {
     if (e.target.name == "image" && e.target.files) {
       const file = e.target.files[0];
       if (file) {
+        setCurrentSrc((prevFileSrc) => {
+          URL.revokeObjectURL(prevFileSrc);
+          return URL.createObjectURL(file);
+        });
         setFormData({ ...formData, [e.target.name]: file });
         return;
       }
@@ -108,7 +113,7 @@ const CreateGroup = () => {
         htmlFor="create-group-image"
         name="image"
         id="create-group-image"
-        currentSrc={"/group-icon.svg"}
+        currentSrc={currentSrc}
         handleChange={handleChange}
       />
 

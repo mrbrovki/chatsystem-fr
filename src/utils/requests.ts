@@ -220,6 +220,15 @@ export const logout = async () => {
  return response;
 }
 
+export const deleteAccount = async () => {
+  const url = `${BASE_URL}${USERS_ROUTE}/delete`;
+  const options = {
+    method: HttpMethod.DELETE,
+  };
+  const response = await fetchRequest(url, options);
+  return response;
+}
+
 export const getChatMessages = async (chatType: string, chatName: string) => {
  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType}/${chatName}`;
  const response = await fetchRequest(url);

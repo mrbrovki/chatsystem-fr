@@ -72,7 +72,7 @@ export interface Chats{
 export type Chat = GroupChat | PrivateChat | BotChat;
 
 export enum PanelMode{
-  USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP
+  USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP, SETTINGS
 }
 export enum ActionType{
   USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD
@@ -115,7 +115,7 @@ interface UNREAD_PAYLOAD{
 export type Action =
   | { type: ActionType.USERNAME; payload: string }
   | { type: ActionType.AVATAR; payload: string }
-  | { type: ActionType.CURRENT_CHAT; payload: Chat }
+  | { type: ActionType.CURRENT_CHAT; payload: Chat | null }
   | { type: ActionType.PRIVATE_CHATS; payload: PrivateChat[] }
   | { type: ActionType.GROUP_CHATS; payload: GroupChat[] }
   | { type: ActionType.BOT_CHATS; payload: BotChat[] }

@@ -6,6 +6,7 @@ import { Context } from "../context";
 import CreateGroup from "./CreateGroup";
 import { PanelMode } from "../context/types";
 import UserChats from "./UserChats";
+import Settings from "./Settings";
 
 const StyledPanel = styled.div`
   background-color: #fff;
@@ -54,6 +55,9 @@ const Panel = () => {
       break;
     case PanelMode.CREATE_GROUP:
       panel = <CreateGroup />;
+      break;
+    case PanelMode.SETTINGS:
+      panel = <Settings />;
       break;
     default:
       panel = <UserChats />;

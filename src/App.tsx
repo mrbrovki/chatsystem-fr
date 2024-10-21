@@ -1,8 +1,13 @@
 import { useContext } from "react";
 import ChatApp from "./chat/ChatApp";
 import { Context } from "./context";
-import styled, { createGlobalStyle, css } from "styled-components";
+import styled, {
+  createGlobalStyle,
+  css,
+  ThemeProvider,
+} from "styled-components";
 import AuthForm from "./auth/AuthForm";
+import { DefaultTheme } from "styled-components/dist/types";
 
 const GlobalStyles = createGlobalStyle`
 :root {
@@ -68,6 +73,14 @@ export const StyledButton = styled.button<{
   }}
 `;
 
+const theme: DefaultTheme = {
+  breakpoints: {
+    mobile: "480px",
+    tablet: "768px",
+    desktop: "2048px",
+  },
+};
+
 const App = () => {
   const {
     state: { username },
@@ -77,7 +90,7 @@ const App = () => {
   return (
     <>
       <GlobalStyles />
-      {content}
+      <ThemeProvider theme={theme}>{content}</ThemeProvider>
     </>
   );
 };

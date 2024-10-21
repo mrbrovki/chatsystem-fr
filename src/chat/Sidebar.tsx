@@ -1,28 +1,28 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
 import { ActionType, PanelMode } from "../context/types";
 import { logout } from "../utils/requests";
-
-const ProfilePicture = styled.img`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  box-shadow: 0 0 2px #00000076;
-  transition: transform 0.3s;
-`;
+import ProfilePicture from "../components/ProfilePicture";
 
 const StyledSidebar = styled.aside`
-  width: 120px;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-  background: linear-gradient(to top, #43a5dc, #ff7bac);
-  padding: 30px 10px;
-
   & > *:hover {
     cursor: pointer;
   }
+
+  @media only screen and (min-width: ${(props) =>
+    props.theme.breakpoints.tablet}) {
+    width: 120px;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    background: linear-gradient(to top, #43a5dc, #ff7bac);
+    padding: 30px 10px;
+  }
+
+  @media only screen and (max-width: ${(props) =>
+    props.theme.breakpoints.tablet}) {
+    display: none;
 `;
 
 const LogoutIcon = styled.img`
@@ -35,7 +35,6 @@ const LogoutIcon = styled.img`
     transform: scale(1.1);
   }
 `;
-
 const StyledEditProfile = styled.div`
   height: 140px;
   display: flex;
@@ -59,7 +58,7 @@ const StyledEditProfile = styled.div`
   &:hover {
     background-color: #ffffff63;
 
-    ${ProfilePicture} {
+    img {
       transform: scale(1.1);
     }
   }
@@ -70,11 +69,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
-  const {
-    state: { avatar },
-    dispatch,
-  } = useContext(Context);
-  const [currentSrc, setCurrentSrc] = useState("/user-icon.svg");
+  const { dispatch } = useContext(Context);
 
   const handleLogout = async () => {
     const response = await logout();
@@ -85,21 +80,21 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
     }
   };
 
-  const onLogoClick = () => {
+  const switchToEdit = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.EDIT_PROFILE });
   };
 
-  useEffect(() => {
-    if (!avatar) return;
-    setCurrentSrc(avatar);
-  }, [avatar]);
+  const switchToSettings = () => {
+    dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.SETTINGS });
+  };
 
   return (
     <StyledSidebar>
-      <StyledEditProfile onClick={onLogoClick}>
-        <ProfilePicture src={currentSrc} />
+      <StyledEditProfile onClick={switchToEdit}>
+        <ProfilePicture width={80} height={80} handleClick={switchToEdit} />
         <p>Profile</p>
       </StyledEditProfile>
+      <img src="/settings-icon.svg" width={64} onClick={switchToSettings} />
       <LogoutIcon src="/logout-icon.svg" onClick={handleLogout} />
     </StyledSidebar>
   );

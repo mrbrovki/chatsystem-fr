@@ -8,10 +8,18 @@ const StyledChatList = styled.div`
   overflow-y: auto;
 `;
 
-const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
-  chats,
-  handleClick,
-}) => {
+const truncateStr = (str: string) => {
+  if (str.length > 10) {
+    return str.substring(0, 10) + "...";
+  }
+  return str;
+};
+
+const ChatList: React.FC<{
+  chats: Chat[];
+  handleClick: any;
+  isSelectMode: boolean;
+}> = ({ chats, handleClick, isSelectMode }) => {
   return (
     <StyledChatList>
       {chats.map((chat) => {
@@ -24,9 +32,10 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 data-type={chat.type}
                 data-name={chat.id}
                 data-id={chat.id}
-                name={chat.name}
+                name={truncateStr(chat.name)}
                 image={chat.image}
                 unreadCount={chat.unreadCount}
+                isSelectMode={isSelectMode}
               />
             );
           case ChatType.PRIVATE:
@@ -36,9 +45,10 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 handleClick={handleClick}
                 data-type={chat.type}
                 data-name={chat.username}
-                name={chat.username}
+                name={truncateStr(chat.username)}
                 image={chat.avatar}
                 unreadCount={chat.unreadCount}
+                isSelectMode={isSelectMode}
               />
             );
           case ChatType.BOT:
@@ -48,9 +58,10 @@ const ChatList: React.FC<{ chats: Chat[]; handleClick: any }> = ({
                 handleClick={handleClick}
                 data-type={chat.type}
                 data-name={chat.botName}
-                name={chat.botName}
+                name={truncateStr(chat.botName)}
                 image={chat.avatar}
                 unreadCount={chat.unreadCount}
+                isSelectMode={isSelectMode}
               />
             );
         }

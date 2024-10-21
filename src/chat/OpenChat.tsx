@@ -35,22 +35,9 @@ import {
   getPrivateChats,
 } from "../utils/requests";
 import { sendFile } from "../utils/stompUtils";
+import OptionsToggle from "../components/OptionsToggle";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
-  flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
-  opacity: ${(props: any) => (props.$isFocused ? 1 : 0.3)};
-  transition: all 0.3s;
-  position: relative;
-
-  ${({ $isDrag }) => {
-    if ($isDrag) {
-      return css`
-        flex: 9;
-        background-color: #0000009;
-      `;
-    }
-  }}
-
   & > section {
     gap: 10px;
     overflow-y: scroll;
@@ -58,6 +45,42 @@ const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
     display: flex;
     flex-flow: column nowrap;
     height: calc(100% - 160px);
+  }
+
+  @media only screen and (min-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
+    opacity: ${(props: any) => (props.$isFocused ? 1 : 0.3)};
+    transition: all 0.3s;
+    position: relative;
+
+    ${({ $isDrag }) => {
+      if ($isDrag) {
+        return css`
+          flex: 9;
+          background-color: #0000009;
+        `;
+      }
+    }}
+  }
+
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    ${(props: any) => {
+      if (props.$isFocused) {
+        return css`
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        `;
+      } else {
+        return css`
+          display: none;
+        `;
+      }
+    }}
   }
 `;
 
@@ -72,6 +95,16 @@ const StyledChatHeader = styled.div`
     0 0;
   background-color: #ffffff;
   border-bottom: solid 1px #e1e1e1;
+
+  & > img:first-child {
+    &:hover {
+      cursor: pointer;
+    }
+    @media only screen and (min-width: ${(props) =>
+        props.theme.breakpoints.tablet}) {
+      display: none;
+    }
+  }
 `;
 
 const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
@@ -658,6 +691,14 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     setContent(chatContent);
   }, [currentChat, messages, username]);
 
+  const back = () => {
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+  };
+  const optionsChildren = (
+    <>
+      <img src="/trash-icon.svg" onClick={undefined} />
+    </>
+  );
   return (
     <StyledChat
       onDragOver={dragover}
@@ -670,8 +711,10 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       {currentChat && (
         <>
           <StyledChatHeader>
+            <img src="/back-icon.svg" height={30} onClick={back} />
             <StyledAvatar src={imageSrc} />
             <div>{name}</div>
+            <OptionsToggle children={optionsChildren} count={1} />
           </StyledChatHeader>
           <section>{content}</section>
 

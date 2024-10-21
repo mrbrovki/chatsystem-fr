@@ -11,21 +11,13 @@ export const StyledAvatar = styled.img`
   width: 48px;
 `;
 
-const Overlay = styled.div`
-  background-color: #393939e8;
-  height: 48px;
-  width: 48px;
-  border-radius: 48px;
-  position: absolute;
-  overflow-y: hidden;
-`;
-
 const StyledChatItem = styled.div`
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
   gap: 10px;
   padding: 8px;
+  width: 100%;
 
   &:hover {
     box-shadow: 0 0 2px #0000002e;
@@ -34,6 +26,10 @@ const StyledChatItem = styled.div`
   }
 `;
 
+const CheckBox = styled.img`
+  left: 0;
+  margin-left: auto;
+`;
 const StyledCounter = styled.div`
   display: block;
   background-color: #43a5dc;
@@ -51,7 +47,8 @@ export default function ChatItem(props: any) {
     state: { panelMode },
   } = useContext(Context);
   const [isSelected, setIsSelected] = useState(false);
-  const { name, image, handleClick, unreadCount, ...restProps } = props;
+  const { name, image, handleClick, unreadCount, isSelectMode, ...restProps } =
+    props;
   const defaultURL = image;
   const avatarURL = defaultURL;
 
@@ -69,26 +66,53 @@ export default function ChatItem(props: any) {
   );
 
   switch (panelMode) {
-    case PanelMode.CREATE_GROUP:
-      return (
-        <StyledChatItem {...restProps} onClick={toggleSelect}>
-          {isSelected || <Overlay />}
-          {children}
-        </StyledChatItem>
-      );
-    case PanelMode.USER_CHATS:
+    case PanelMode.CREATE_GROUP: {
       return (
         <StyledChatItem {...restProps} onClick={toggleSelect}>
           {children}
+          {isSelected ? (
+            <CheckBox src="/checked-icon.svg" width={18} height={18} />
+          ) : (
+            <CheckBox src="/unchecked-icon.svg" width={18} height={18} />
+          )}
         </StyledChatItem>
       );
-    case PanelMode.CREATE_CHAT:
+      break;
+    }
+
+    case PanelMode.USER_CHATS: {
+      if (isSelectMode) {
+        return (
+          <StyledChatItem {...restProps} onClick={toggleSelect}>
+            {children}
+            {isSelected ? (
+              <CheckBox src="/checked-icon.svg" width={18} height={18} />
+            ) : (
+              <CheckBox src="/unchecked-icon.svg" width={18} height={18} />
+            )}
+          </StyledChatItem>
+        );
+      } else {
+        return (
+          <StyledChatItem {...restProps} onClick={toggleSelect}>
+            {children}
+          </StyledChatItem>
+        );
+      }
+      break;
+    }
+
+    case PanelMode.CREATE_CHAT: {
       return (
         <StyledChatItem {...restProps} onClick={handleClick}>
           {children}
         </StyledChatItem>
       );
-    default:
+      break;
+    }
+
+    default: {
       return <StyledChatItem {...restProps}>{children}</StyledChatItem>;
+    }
   }
 }

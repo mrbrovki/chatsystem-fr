@@ -77,7 +77,6 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
     const { username, avatar } = response;
 
     dispatch({ type: ActionType.USERNAME, payload: username });
-    console.log(document.cookie);
     if (avatar) {
       dispatch({
         type: ActionType.AVATAR,
