@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext } from "react";
 import { StyledButton } from "../App";
 import { Context } from "../context";
@@ -16,7 +17,7 @@ const Settings = () => {
     }
   };
   const handleDeleteAccount = async () => {
-    const response = await deleteAccount();
+    await deleteAccount();
     dispatch({ type: ActionType.RESET, payload: null });
   };
 

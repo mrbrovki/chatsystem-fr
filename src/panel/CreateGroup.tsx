@@ -127,7 +127,11 @@ const CreateGroup = () => {
         autoComplete="off"
       />
 
-      <ChatList chats={privateChats} handleClick={handleClick} />
+      <ChatList
+        chats={privateChats}
+        handleClick={handleClick}
+        isSelectMode={true}
+      />
     </>
   );
 };

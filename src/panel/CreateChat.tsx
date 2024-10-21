@@ -100,7 +100,11 @@ const CreateChat = () => {
         handleChange={handleChange}
       />
 
-      <ChatList chats={filteredUsers} handleClick={handleAddNewFriend} />
+      <ChatList
+        chats={filteredUsers}
+        handleClick={handleAddNewFriend}
+        isSelectMode={false}
+      />
     </>
   );
 };
