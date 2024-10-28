@@ -1,13 +1,9 @@
 import { useContext } from "react";
 import ChatApp from "./chat/ChatApp";
 import { Context } from "./context";
-import styled, {
-  createGlobalStyle,
-  css,
-  ThemeProvider,
-} from "styled-components";
+import styled, { createGlobalStyle, ThemeProvider } from "styled-components";
 import AuthForm from "./auth/AuthForm";
-import { DefaultTheme } from "styled-components/dist/types";
+import { theme } from "./constants/themes";
 
 const GlobalStyles = createGlobalStyle`
 :root {
@@ -41,45 +37,6 @@ export const StyledForm = styled.form`
   max-width: 500px;
   align-self: center;
 `;
-
-export const StyledButton = styled.button<{
-  $isDark?: boolean;
-  $isDisabled?: boolean;
-}>`
-  height: 3rem;
-  background-color: ${({ $isDark }) => ($isDark ? "#000" : "#fff")};
-  color: ${({ $isDark }) => ($isDark ? "#ffffff" : "#000000")};
-  font-size: 1rem;
-  border-radius: 8px;
-  transition: color 0.3s, background-color 0.3s;
-  margin: 4px 0;
-
-  &:hover {
-    background-color: ${({ $isDark }) => ($isDark ? "#ffffff" : "#000000")};
-    color: ${({ $isDark }) => ($isDark ? "#000000" : "#ffffff")};
-    cursor: pointer;
-  }
-
-  ${({ $isDark, $isDisabled }) => {
-    if ($isDisabled) {
-      return css`
-        opacity: 0.6;
-        &:hover {
-          background-color: ${$isDark ? "#000" : "#fff"};
-          color: ${$isDark ? "#ffffff" : "#000000"};
-        }
-      `;
-    }
-  }}
-`;
-
-const theme: DefaultTheme = {
-  breakpoints: {
-    mobile: "480px",
-    tablet: "768px",
-    desktop: "2048px",
-  },
-};
 
 const App = () => {
   const {

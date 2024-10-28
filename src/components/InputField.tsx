@@ -4,33 +4,61 @@ import styled, { css } from "styled-components";
 const StyledInputContainer = styled.div<{
   $isError: boolean;
   $errorContent: string;
+  $priority: "primary" | "secondary";
 }>`
   position: relative;
-  height: 4.5rem;
+  margin: 0.5rem 0;
+  height: 3.5rem;
 
   & > label {
+    font-size: 1rem;
     left: 1rem;
-    top: -0.1rem;
     position: absolute;
-    background-color: #fff;
-    padding-right: 16px;
+    background: ${({ theme, $priority }) => {
+      const topBg = theme.colors.panel.background;
+      const bottomBg = theme.colors.input[$priority].background;
+      return css`
+        linear-gradient(to bottom, ${topBg} 50%, ${bottomBg} 50%);
+      `;
+    }};
+    padding-right: 8px;
     padding-left: 8px;
+    color: ${({ theme, $priority }) => theme.colors.input[$priority].label};
   }
 
   & > input {
+    border: none;
     width: 100%;
     margin-top: 0.5rem;
     height: 3rem;
     border-radius: 16px;
     padding-left: 16px;
-    border: 2px solid #b9b9b9;
+    outline: 2px solid
+      ${({ theme, $priority }) => theme.colors.input[$priority].outline};
+    background-color: ${({ theme, $priority }) =>
+      theme.colors.input[$priority].background};
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    ${({ $priority }) => {
+      if ($priority === "secondary") {
+        return css`
+          box-shadow: 0 0 8px #00000026;
+          outline: none;
+        `;
+      }
+    }}
 
     &::placeholder {
-      color: #b9b9b9;
+      color: ${({ theme, $priority }) =>
+        theme.colors.input[$priority].placeholder};
     }
 
     &:focus {
-      outline-color: #333333;
+      outline-color: ${({ theme, $priority }) =>
+        theme.colors.input[$priority].focus};
     }
   }
 
@@ -43,7 +71,8 @@ const StyledInputContainer = styled.div<{
       cursor: pointer;
     }
   }
-  ${({ $isError, $errorContent }) => {
+
+  ${({ $isError, $errorContent, $priority, theme }) => {
     if ($isError) {
       return css`
         &::after {
@@ -51,7 +80,7 @@ const StyledInputContainer = styled.div<{
           padding-left: 16px;
           font-size: 0.8rem;
           content: "${$errorContent}";
-          color: #cc0d0d;
+          color: ${theme.colors.input[$priority].error};
         }
       `;
     }
@@ -70,6 +99,9 @@ interface InputProps {
   isPassword?: boolean;
   isError?: boolean;
   errorContent?: string;
+  priority: "primary" | "secondary";
+  children?: ChildNode;
+  className?: string;
 }
 
 const InputField = forwardRef((props: InputProps, ref: any) => {
@@ -100,6 +132,8 @@ const InputField = forwardRef((props: InputProps, ref: any) => {
     <StyledInputContainer
       $isError={props.isError || false}
       $errorContent={props.errorContent || ""}
+      $priority={props.priority}
+      className={props.className}
     >
       <label htmlFor={props.label}>{props.label}</label>
       <input

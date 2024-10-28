@@ -8,7 +8,7 @@ import { StyledPanelButton } from "./Panel";
 import AvatarUpload from "../components/AvatarUpload";
 import { createGroup } from "../utils/requests";
 
-export const StyledHeader = styled.div`
+const StyledHeader = styled.div`
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
@@ -125,6 +125,7 @@ const CreateGroup = () => {
         id="create-group-name"
         handleChange={handleChange}
         autoComplete="off"
+        priority="primary"
       />
 
       <ChatList

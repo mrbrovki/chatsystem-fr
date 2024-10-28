@@ -11,7 +11,7 @@ const StyledLogoContainer = styled.div<{ $mode: AuthMode }>`
   background: linear-gradient(to top, #43a5dc, #ff7bac);
   position: absolute;
   height: 100%;
-  width: 50%;
+  width: 50vw;
   transform: translate(100%);
   transition: transform 0.3s, border-radius 0.3s;
 

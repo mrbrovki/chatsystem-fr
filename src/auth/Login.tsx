@@ -9,10 +9,11 @@ import {
 import { Context } from "../context";
 import styled from "styled-components";
 import InputField from "../components/InputField";
-import { ActionType } from "../context/types";
-import { StyledButton, StyledForm } from "../App";
+import { ActionType, BtnPriority } from "../context/types";
+import { StyledForm } from "../App";
 import { AuthMode, AuthResponse } from "../constants";
 import { demoLogin, login } from "../utils/requests";
+import Button from "../components/Button";
 
 const StyledLogin = styled.div`
   background-color: white;
@@ -39,6 +40,7 @@ interface LoginProps {
 export default function Login({ setMode, cachedUsername }: LoginProps) {
   const { dispatch } = useContext(Context);
   const usernameRef = useRef<HTMLInputElement>();
+  const [isDisabled, setIsDisabled] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -71,6 +73,7 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
   const handleDemoLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = (await demoLogin()) as AuthResponse;
@@ -85,6 +88,11 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
     }
   };
 
+  useEffect(() => {
+    const { username, password } = formData;
+    setIsDisabled(!username || !password);
+  }, [formData]);
+
   return (
     <StyledLogin>
       <div>Welcome Back</div>
@@ -98,6 +106,7 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
           name="username"
           autoComplete="off"
           ref={usernameRef}
+          priority="primary"
         />
 
         <InputField
@@ -109,14 +118,24 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
           handleChange={handleChange}
           isPassword
           autoComplete="current-password"
+          priority="primary"
         />
 
-        <StyledButton type="submit" onClick={handleLogin} $isDark>
+        <Button
+          type="submit"
+          handleClick={handleLogin}
+          priority={BtnPriority.PRIMARY}
+          isDisabled={isDisabled}
+        >
           Login
-        </StyledButton>
-        <StyledButton type="submit" onClick={handleDemoLogin}>
+        </Button>
+        <Button
+          type="submit"
+          handleClick={handleDemoLogin}
+          priority={BtnPriority.SECONDARY}
+        >
           Demo Login
-        </StyledButton>
+        </Button>
       </StyledForm>
       <p>
         Don't have an account?{" "}

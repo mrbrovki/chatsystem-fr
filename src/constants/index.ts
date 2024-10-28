@@ -37,7 +37,7 @@ export const initState: State = {
     bot: {}
   }
 };
-
+export const WEBSOCKET = import.meta.env.VITE_API_WEBSOCKET;
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const MESSAGES_ROUTE = import.meta.env.VITE_API_MESSAGES_ROUTE;
 export const FILES_ROUTE = import.meta.env.VITE_API_FILES_ROUTE

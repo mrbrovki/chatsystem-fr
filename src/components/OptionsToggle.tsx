@@ -9,8 +9,9 @@ const StyledDots = styled.div<{ $isChecked: boolean; $count: number }>`
   flex-flow: row nowrap;
   align-items: center;
   justify-content: center;
-  position: absolute;
   transition: transform 0.3s ease-out;
+  transform: rotateZ(90deg);
+
   div,
   div:before,
   div:after {
@@ -38,11 +39,9 @@ const StyledDots = styled.div<{ $isChecked: boolean; $count: number }>`
     transition: left 0.3s ease-out, width 0.3s ease-out;
   }
 
-  ${({ $isChecked, $count }) => {
+  ${({ $isChecked }) => {
     if ($isChecked) {
       return css`
-        transform: translateX(-${$count * 32}px);
-
         div:before {
           right: -8px;
           width: 22px;
@@ -59,6 +58,10 @@ const StyledDots = styled.div<{ $isChecked: boolean; $count: number }>`
   }}
 `;
 const StyledIcons = styled.div<{ $isChecked: boolean }>`
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
   img {
     width: 32px;
     height: 32px;
@@ -80,9 +83,6 @@ const StyledOptions = styled.div`
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  justify-content: flex-end;
-  right: 0;
-  margin-left: auto;
 `;
 
 const OptionsToggle = (props: any) => {

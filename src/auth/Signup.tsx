@@ -8,12 +8,14 @@ import {
   useState,
 } from "react";
 import InputField from "../components/InputField";
-import { StyledButton, StyledForm } from "../App";
+import { StyledForm } from "../App";
 import { AuthMode, SignupFormData } from "../constants";
 import { useUsernameExists } from "../hooks/useUsernameExists";
 import { signup } from "../utils/requests";
+import Button from "../components/Button";
+import { BtnPriority } from "../context/types";
 
-const StyleSignup = styled.div`
+const StyledSignup = styled.div`
   background-color: #ffffff;
   position: relative;
 
@@ -50,6 +52,8 @@ const StyledCheck = styled.img<{ $isChecked: boolean }>`
   }}
 `;
 
+const StyledButton = styled(Button)<>``;
+
 interface SignupProps {
   setMode: Dispatch<SetStateAction<AuthMode>>;
   setCachedUsername: Dispatch<SetStateAction<string | undefined>>;
@@ -79,12 +83,14 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
   };
 
   useEffect(() => {
-    const { username, email, password, confirmedPassword } = formData;
+    const { email, password, confirmedPassword } = formData;
 
-    if (username && email && password && confirmedPassword) {
+    if (isAvailable && email && password && confirmedPassword) {
       setIsDisabled(password !== confirmedPassword);
+    } else {
+      setIsDisabled(true);
     }
-  }, [formData]);
+  }, [formData, isAvailable]);
 
   const handleSignup = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -100,7 +106,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
   };
 
   return (
-    <StyleSignup>
+    <StyledSignup>
       <div>Get started</div>
       <StyledForm>
         <InputField
@@ -112,6 +118,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           handleChange={handleUsernameChange}
           isError={!isAvailable}
           errorContent="username already exists"
+          priority="primary"
         />
 
         <InputField
@@ -122,6 +129,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           name="email"
           handleChange={handleChange}
           autoComplete="off"
+          priority="primary"
         />
 
         <InputField
@@ -133,6 +141,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           name="password"
           isPassword
           autoComplete="new-password"
+          priority="primary"
         />
 
         <InputField
@@ -146,13 +155,14 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           isError={formData.password != formData.confirmedPassword}
           errorContent="passwords dont match!"
           autoComplete="new-password"
+          priority="primary"
         />
 
         <StyledButton
           type="submit"
-          onClick={handleSignup}
-          $isDisabled={isDisabled}
-          $isDark
+          handleClick={handleSignup}
+          priority={BtnPriority.PRIMARY}
+          isDisabled={isDisabled}
         >
           Signup
         </StyledButton>
@@ -168,7 +178,7 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
         </span>
       </p>
       <StyledCheck src="/check-icon.svg" $isChecked={isChecked} />
-    </StyleSignup>
+    </StyledSignup>
   );
 };
 

@@ -11,6 +11,7 @@ interface ProfilePictureProps {
   width: number;
   height: number;
   handleClick: () => void;
+  className?: string;
 }
 const ProfilePicture = (props: ProfilePictureProps) => {
   const {
@@ -30,6 +31,7 @@ const ProfilePicture = (props: ProfilePictureProps) => {
       width={props.width}
       height={props.height}
       onClick={props.handleClick}
+      className={props.className}
     />
   );
 };

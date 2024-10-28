@@ -33,9 +33,11 @@ import {
   getMessages,
   getAllChats,
   getPrivateChats,
+  deletePrivateChat,
 } from "../utils/requests";
 import { sendFile } from "../utils/stompUtils";
 import OptionsToggle from "../components/OptionsToggle";
+import { WEBSOCKET } from "../constants";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   & > section {
@@ -90,10 +92,10 @@ const StyledChatHeader = styled.div`
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   border-radius: var(--components-border-radius) var(--components-border-radius)
     0 0;
-  background-color: #ffffff;
+  background-color: ${(props) => props.theme.colors.chat.header};
   border-bottom: solid 1px #e1e1e1;
 
   & > img:first-child {
@@ -119,13 +121,16 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
       if ($isSender) {
         return css`
           border-radius: 20px 20px 0 20px;
-          background-color: #43a5dc;
-          color: #fff;
+          background-color: ${(props) =>
+            props.theme.colors.message.self.background};
+          color: ${(props) => props.theme.colors.message.self.text};
         `;
       } else {
         return css`
           border-radius: 20px 20px 20px 0;
-          background-color: #d9d9d9;
+          background-color: ${(props) =>
+            props.theme.colors.message.other.background};
+          color: ${(props) => props.theme.colors.message.other.text};
         `;
       }
     }}
@@ -153,6 +158,12 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   }
 `;
 
+const StyledCurrentChat = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.5rem;
+`;
 type PropsType = object;
 
 const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
@@ -180,7 +191,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   const messagesRef = useRef<Messages>(messages);
 
   const connectToWebsocket = (chats: Chats) => {
-    const socket = new WebSocket("ws://localhost:8080/ws");
+    const socket = new WebSocket(WEBSOCKET);
     const stompClient = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -694,11 +705,30 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   const back = () => {
     dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
+
+  const deleteChat = async () => {
+    if (!currentChat) return;
+    switch (currentChat.type) {
+      case ChatType.PRIVATE: {
+        const newPrivateChats = privateChats.filter(
+          (chat) => chat.username != currentChat.username
+        );
+        dispatch({ type: ActionType.PRIVATE_CHATS, payload: newPrivateChats });
+        dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+        const deletedChat = (await deletePrivateChat(
+          currentChat.username,
+          false
+        )) as any;
+      }
+    }
+  };
+
   const optionsChildren = (
     <>
-      <img src="/trash-icon.svg" onClick={undefined} />
+      <img src="/trash-icon.svg" onClick={deleteChat} />
     </>
   );
+
   return (
     <StyledChat
       onDragOver={dragover}
@@ -712,8 +742,10 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         <>
           <StyledChatHeader>
             <img src="/back-icon.svg" height={30} onClick={back} />
-            <StyledAvatar src={imageSrc} />
-            <div>{name}</div>
+            <StyledCurrentChat>
+              <StyledAvatar src={imageSrc} />
+              <div>{name}</div>
+            </StyledCurrentChat>
             <OptionsToggle children={optionsChildren} count={1} />
           </StyledChatHeader>
           <section>{content}</section>

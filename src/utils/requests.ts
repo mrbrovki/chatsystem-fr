@@ -39,7 +39,13 @@ const fetchRequest = async (url: string, options?: FetchRequestOptions, error?:a
 
 export const getAllChats = async ():Promise<Chats> => {
   const url = `${BASE_URL}${CHATS_ROUTE}`;
-  const response = await fetchRequest(url);
+  const options = {
+    method: HttpMethod.GET,
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  }
+  const response = await fetchRequest(url, options);
   return response.json();
 };
 
@@ -148,7 +154,7 @@ export const createGroup = async (formData: FormData) => {
 export const addNewFriend = async (username: string) => {
   const url = `${BASE_URL}${CHATS_ROUTE}/private/add`;
   const options = {
-    method: HttpMethod.PUT,
+    method: HttpMethod.POST,
     headers: {
       "Content-Type": "application/json",
     },
@@ -216,7 +222,8 @@ export const logout = async () => {
  const options = {
   method: HttpMethod.POST
  };
- const response = await fetchRequest(url, options);
+ const error = () => {};
+ const response = await fetchRequest(url, options, error);
  return response;
 }
 
@@ -233,4 +240,13 @@ export const getChatMessages = async (chatType: string, chatName: string) => {
  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType}/${chatName}`;
  const response = await fetchRequest(url);
  return response.json();
-} 
+}
+
+export const deletePrivateChat = async (username: string, isForBoth: boolean) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?username=${username}&isForBoth=${isForBoth}`;
+  const options = {
+    method: HttpMethod.DELETE,
+  };
+  const response = await fetchRequest(url, options);
+  return response.json()
+}

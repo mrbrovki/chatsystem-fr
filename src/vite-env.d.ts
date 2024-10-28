@@ -2,6 +2,7 @@
 
 interface ImportMeta {
   env: {
+    VITE_API_WEBSOCKET: string;
     VITE_API_BASE_URL: string;
     VITE_API_MESSAGES_ROUTE: string;
     VITE_API_FILES_ROUTE: string;

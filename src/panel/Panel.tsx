@@ -9,7 +9,8 @@ import UserChats from "./UserChats";
 import Settings from "./Settings";
 
 const StyledPanel = styled.div`
-  background-color: #fff;
+  background-color: ${(props) => props.theme.colors.panel.background};
+  position: relative;
   padding: 32px;
   flex: 3;
   display: flex;
@@ -34,6 +35,30 @@ export const StyledPanelButton = styled.button<{
 
   &:hover {
     color: ${(props) => props.$hoverColor};
+  }
+`;
+
+export const StyledHeader = styled.header`
+  position: relative;
+  height: 10rem;
+`;
+
+export const StyledControl = styled.div`
+  height: 32px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  gap: 4px;
+
+  & *:hover {
+    cursor: pointer;
+  }
+  & > div:first-child,
+  & > button:first-child {
+    left: 0;
+    margin-right: auto;
   }
 `;
 

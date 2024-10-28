@@ -27,6 +27,7 @@ import {
 import ProfilePicture from "../components/ProfilePicture";
 import InputField from "../components/InputField";
 import OptionsToggle from "../components/OptionsToggle";
+import { StyledControl, StyledHeader } from "./Panel";
 
 const SettingsIcon = styled.img`
   filter: invert(1);
@@ -41,38 +42,34 @@ const SettingsIcon = styled.img`
   }
 `;
 
-const StyledHeader = styled.header`
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-  border-bottom: 1px black solid;
-  justify-content: flex-end;
-  height: 48px;
-
-  img:hover {
-    cursor: pointer;
-  }
-
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
-    img:nth-of-type(1) {
-      display: none;
-    }
-  }
-
-  h1 {
-    left: 0;
-    margin-right: auto;
-  }
+const StyledEmptyIcon = styled.img`
+  margin: auto;
+  max-height: 30%;
+  max-width: 70%;
 `;
 
-const StyledControl = styled.div`
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
+const StyledSearch = styled(InputField)`
+  input {
+    padding-left: 64px;
+  }
 
-  & > div:first-of-type {
-    width: auto;
+  &::after {
+    display: block;
+    content: "";
+    background: url("/search-icon.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 20px;
+    left: 16px;
+  }
+`;
+const StyledProfile = styled(ProfilePicture)`
+  @media only screen and (min-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    display: none;
   }
 `;
 
@@ -301,40 +298,48 @@ export default function UserChats() {
       <img src="/trash-icon.svg" width={32} height={32} onClick={undefined} />
     </>
   );
+
   return (
     <>
       <StyledHeader>
+        <StyledControl>
+          <OptionsToggle children={optionsChildren} count={2} />
+          <StyledProfile width={32} height={32} handleClick={switchToEdit} />
+          <img
+            src="/edit-icon.svg"
+            width={32}
+            height={32}
+            onClick={switchToCreateMode}
+          />
+          <SettingsIcon
+            src="/settings-icon.svg"
+            width={32}
+            height={32}
+            onClick={switchToSettings}
+          />
+        </StyledControl>
+
         <h1>Chat</h1>
-        <ProfilePicture width={32} height={32} handleClick={switchToEdit} />
-        <img
-          src="/edit-icon.svg"
-          width={32}
-          height={32}
-          onClick={switchToCreateMode}
-        />
-        <SettingsIcon
-          src="/settings-icon.svg"
-          width={32}
-          height={32}
-          onClick={switchToSettings}
-        />
-      </StyledHeader>
-      <StyledControl>
-        <InputField
-          type={"text"}
+
+        <StyledSearch
+          type="text"
           id="find-chat"
           placeholder="search"
           name="find-chat"
           handleChange={handleChange}
+          priority="secondary"
         />
-        <OptionsToggle children={optionsChildren} count={2} />
-      </StyledControl>
+      </StyledHeader>
 
-      <ChatList
-        chats={fileredChats}
-        handleClick={handleChatClick}
-        isSelectMode={isSelectMode}
-      />
+      {fileredChats.length !== 0 ? (
+        <ChatList
+          chats={fileredChats}
+          handleClick={handleChatClick}
+          isSelectMode={isSelectMode}
+        />
+      ) : (
+        <StyledEmptyIcon src="/desert-icon.svg" />
+      )}
     </>
   );
 }

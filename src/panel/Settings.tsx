@@ -1,20 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useContext } from "react";
-import { StyledButton } from "../App";
 import { Context } from "../context";
 import { deleteAccount, logout } from "../utils/requests";
-import { ActionType, PanelMode } from "../context/types";
-import { StyledPanelButton } from "./Panel";
+import { ActionType, BtnPriority, PanelMode } from "../context/types";
+import { StyledControl, StyledPanelButton } from "./Panel";
+import Button from "../components/Button";
 
 const Settings = () => {
   const { dispatch } = useContext(Context);
   const handleLogout = async () => {
     const response = await logout();
-
-    if (response.status === 204) {
-      //closeConnection();
-      dispatch({ type: ActionType.RESET, payload: null });
-    }
+    dispatch({ type: ActionType.RESET, payload: null });
+    //closeConnection();
   };
   const handleDeleteAccount = async () => {
     await deleteAccount();
@@ -27,18 +24,30 @@ const Settings = () => {
 
   return (
     <>
-      <StyledPanelButton
+      <StyledControl>
+        <StyledPanelButton
+          type="submit"
+          onClick={back}
+          $color="#43A5DC"
+          $hoverColor="#194b68"
+        >
+          back
+        </StyledPanelButton>
+      </StyledControl>
+      <Button
         type="submit"
-        onClick={back}
-        $color="#43A5DC"
-        $hoverColor="#194b68"
+        handleClick={handleLogout}
+        priority={BtnPriority.SECONDARY}
       >
-        back
-      </StyledPanelButton>
-      <StyledButton onClick={handleLogout}>Logout</StyledButton>
-      <StyledButton onClick={handleDeleteAccount}>
+        Logout
+      </Button>
+      <Button
+        type="submit"
+        handleClick={handleDeleteAccount}
+        priority={BtnPriority.DANGER}
+      >
         Delete My Account
-      </StyledButton>
+      </Button>
     </>
   );
 };

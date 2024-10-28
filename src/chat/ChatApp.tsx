@@ -8,7 +8,7 @@ import { Client } from "@stomp/stompjs";
 const StyledMain = styled.main`
   width: 100%;
   height: 100vh;
-  background-color: #d9d9d9;
+  background-color: ${(props) => props.theme.colors.main.background};
 
   @media only screen and (min-width: ${(props) =>
       props.theme.breakpoints.tablet}) {

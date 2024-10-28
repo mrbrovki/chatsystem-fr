@@ -7,14 +7,14 @@ import {
 } from "react";
 import InputField from "../components/InputField";
 import { Context } from "../context";
-import { StyledHeader } from "./CreateGroup";
-import { ActionType, PanelMode } from "../context/types";
-import { StyledButton, StyledForm } from "../App";
-import { StyledPanelButton } from "./Panel";
+import { ActionType, BtnPriority, PanelMode } from "../context/types";
+import { StyledForm } from "../App";
+import { StyledHeader, StyledPanelButton } from "./Panel";
 import AvatarUpload from "../components/AvatarUpload";
 import { useUsernameExists } from "../hooks/useUsernameExists";
 import { editUser } from "../utils/requests";
 import { AuthResponse } from "../constants";
+import Button from "../components/Button";
 
 interface FormData {
   username: string;
@@ -123,6 +123,7 @@ const EditProfile = () => {
           handleChange={handleUsernameChange}
           isError={!isAvailable}
           errorContent="username already exists"
+          priority="secondary"
         />
         <InputField
           type={"text"}
@@ -131,10 +132,15 @@ const EditProfile = () => {
           name="password"
           handleChange={handleChange}
           placeholder="enter new password"
+          priority="secondary"
         />
-        <StyledButton type="submit" onClick={submitEdit} $isDark>
+        <Button
+          type="submit"
+          handleClick={submitEdit}
+          priority={BtnPriority.PRIMARY}
+        >
           save changes
-        </StyledButton>
+        </Button>
       </StyledForm>
     </>
   );

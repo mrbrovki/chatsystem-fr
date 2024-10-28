@@ -9,6 +9,12 @@ export const StyledAvatar = styled.img`
   float: left;
   height: 48px;
   width: 48px;
+
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    width: 64px;
+    height: 64px;
+  }
 `;
 
 const StyledChatItem = styled.div`
@@ -18,11 +24,17 @@ const StyledChatItem = styled.div`
   gap: 10px;
   padding: 8px;
   width: 100%;
+  margin-top: 4px;
+  border-bottom: 1px #e8e8e8 solid;
 
   &:hover {
     box-shadow: 0 0 2px #0000002e;
-    border-radius: 20px;
+
     cursor: pointer;
+  }
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    font-size: 1.25rem;
   }
 `;
 

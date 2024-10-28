@@ -3,6 +3,7 @@ import ChatItem from "./ChatItem";
 import { Chat, ChatType } from "../context/types";
 
 const StyledChatList = styled.div`
+  margin-top: 1rem;
   flex-grow: 1;
   position: relative;
   overflow-y: auto;

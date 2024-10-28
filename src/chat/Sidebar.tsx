@@ -11,20 +11,20 @@ const StyledSidebar = styled.aside`
   }
 
   @media only screen and (min-width: ${(props) =>
-    props.theme.breakpoints.tablet}) {
+      props.theme.breakpoints.tablet}) {
     width: 120px;
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
-    background: linear-gradient(to top, #43a5dc, #ff7bac);
+    background: ${(props) => props.theme.colors.sidebar};
     padding: 30px 10px;
   }
 
   @media only screen and (max-width: ${(props) =>
-    props.theme.breakpoints.tablet}) {
+      props.theme.breakpoints.tablet}) {
     display: none;
+  }
 `;
-
 const LogoutIcon = styled.img`
   width: 80%;
   margin-top: auto;
@@ -63,6 +63,13 @@ const StyledEditProfile = styled.div`
     }
   }
 `;
+const SettingsIcon = styled.img`
+  margin-top: 1rem;
+  transition: transform 0.3s;
+  &:hover {
+    transform: rotateZ(90deg);
+  }
+`;
 
 interface SidebarProps {
   closeConnection: () => void; // Replace `any` with a more specific type if possible
@@ -73,11 +80,8 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
 
   const handleLogout = async () => {
     const response = await logout();
-
-    if (response.status === 204) {
-      closeConnection();
-      dispatch({ type: ActionType.RESET, payload: null });
-    }
+    dispatch({ type: ActionType.RESET, payload: null });
+    closeConnection();
   };
 
   const switchToEdit = () => {
@@ -94,7 +98,11 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
         <ProfilePicture width={80} height={80} handleClick={switchToEdit} />
         <p>Profile</p>
       </StyledEditProfile>
-      <img src="/settings-icon.svg" width={64} onClick={switchToSettings} />
+      <SettingsIcon
+        src="/settings-icon.svg"
+        width={64}
+        onClick={switchToSettings}
+      />
       <LogoutIcon src="/logout-icon.svg" onClick={handleLogout} />
     </StyledSidebar>
   );

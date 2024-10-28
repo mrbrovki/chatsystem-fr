@@ -9,7 +9,7 @@ import { Context } from "../context";
 import ChatList from "../chat/ChatList";
 import InputField from "../components/InputField";
 import { ActionType, ChatType, PanelMode, PrivateChat } from "../context/types";
-import { StyledPanelButton } from "./Panel";
+import { StyledControl, StyledHeader, StyledPanelButton } from "./Panel";
 import { addNewFriend, getAllUsers } from "../utils/requests";
 
 const CreateChat = () => {
@@ -75,30 +75,35 @@ const CreateChat = () => {
 
   return (
     <>
-      <StyledPanelButton
-        type="submit"
-        onClick={back}
-        $color="#43A5DC"
-        $hoverColor="#194b68"
-      >
-        back
-      </StyledPanelButton>
-      <StyledPanelButton
-        onClick={createGroup}
-        $color="#000"
-        $hoverColor="#194b68"
-      >
-        <img src="/group-icon.svg" width={30} height={30} />
-        <span>Create Group</span>
-      </StyledPanelButton>
-
-      <InputField
-        type={"text"}
-        id="add-new-friend"
-        placeholder="search"
-        name="newFriend"
-        handleChange={handleChange}
-      />
+      <StyledHeader>
+        <StyledControl>
+          <StyledPanelButton
+            type="submit"
+            onClick={back}
+            $color="#43A5DC"
+            $hoverColor="#194b68"
+          >
+            back
+          </StyledPanelButton>
+          <StyledPanelButton
+            onClick={createGroup}
+            $color="#000"
+            $hoverColor="#194b68"
+          >
+            <img src="/group-icon.svg" width={30} height={30} />
+            <span>Create Group</span>
+          </StyledPanelButton>
+        </StyledControl>
+        <h1>New Chat</h1>
+        <InputField
+          type={"text"}
+          id="add-new-friend"
+          placeholder="search"
+          name="newFriend"
+          handleChange={handleChange}
+          priority="secondary"
+        />
+      </StyledHeader>
 
       <ChatList
         chats={filteredUsers}
