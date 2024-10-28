@@ -132,3 +132,7 @@ export type Action =
   | { type: ActionType.ADD_GROUP_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.RESET_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.RESET, payload: null};
+
+export enum BtnPriority{
+  PRIMARY, SECONDARY, DANGER
+}
