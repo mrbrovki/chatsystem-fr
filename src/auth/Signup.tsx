@@ -52,8 +52,6 @@ const StyledCheck = styled.img<{ $isChecked: boolean }>`
   }}
 `;
 
-const StyledButton = styled(Button)<>``;
-
 interface SignupProps {
   setMode: Dispatch<SetStateAction<AuthMode>>;
   setCachedUsername: Dispatch<SetStateAction<string | undefined>>;
@@ -158,14 +156,14 @@ const Signup = ({ setMode, setCachedUsername }: SignupProps) => {
           priority="primary"
         />
 
-        <StyledButton
+        <Button
           type="submit"
           handleClick={handleSignup}
           priority={BtnPriority.PRIMARY}
           isDisabled={isDisabled}
         >
           Signup
-        </StyledButton>
+        </Button>
       </StyledForm>
       <p>
         Already registered?{" "}

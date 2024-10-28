@@ -719,6 +719,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           currentChat.username,
           false
         )) as any;
+        console.log(deletedChat);
       }
     }
   };

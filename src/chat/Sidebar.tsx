@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
   const { dispatch } = useContext(Context);
 
   const handleLogout = async () => {
-    const response = await logout();
+    await logout();
     dispatch({ type: ActionType.RESET, payload: null });
     closeConnection();
   };

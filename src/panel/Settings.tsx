@@ -9,7 +9,8 @@ import Button from "../components/Button";
 const Settings = () => {
   const { dispatch } = useContext(Context);
   const handleLogout = async () => {
-    const response = await logout();
+    await logout();
+    console.clear();
     dispatch({ type: ActionType.RESET, payload: null });
     //closeConnection();
   };
