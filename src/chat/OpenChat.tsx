@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { getChatName, saveFile } from "../utils/utils";
+import { getChatName, padZero, saveFile } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
@@ -18,6 +18,9 @@ import {
   Chat,
   Chats,
   ChatType,
+  InfoChat,
+  InfoMessage,
+  InfoMessages,
   Message,
   Messages,
   MessageType,
@@ -34,6 +37,7 @@ import {
   getAllChats,
   getPrivateChats,
   deletePrivateChat,
+  getInfo,
 } from "../utils/requests";
 import { sendFile } from "../utils/stompUtils";
 import OptionsToggle from "../components/OptionsToggle";
@@ -110,12 +114,17 @@ const StyledChatHeader = styled.div`
 `;
 
 const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
-  max-width: 320px;
+  max-width: 24rem;
   align-self: ${({ $isSender }) => ($isSender ? "flex-end" : "flex-start")};
 
   .content {
     padding: 16px;
     box-shadow: 0 0 8px #00000042;
+
+    a {
+      color: inherit;
+      word-wrap: break-word;
+    }
 
     ${({ $isSender }) => {
       if ($isSender) {
@@ -143,14 +152,13 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
           border-radius: 10px;
 
           img {
-            width: 100%;
             display: block;
           }
         `;
       }
     }}
   }
-  span {
+  & > span {
     color: #bfbfbf;
     font-weight: 600;
     font-size: 12px;
@@ -163,6 +171,17 @@ const StyledCurrentChat = styled.div`
   flex-flow: row nowrap;
   align-items: center;
   gap: 0.5rem;
+
+  @media only screen and (max-width: ${(props) =>
+      props.theme.breakpoints.tablet}) {
+    margin-left: 1rem;
+    margin-right: auto;
+
+    img {
+      width: 48px;
+      height: 48px;
+    }
+  }
 `;
 type PropsType = object;
 
@@ -177,13 +196,12 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       privateChats,
       groupChats,
       botChats,
+      infoMessages,
     },
     dispatch,
   } = useContext(Context);
 
-  const [imageSrc, setImageSrc] = useState(
-    `https://api.multiavatar.com/default.svg`
-  );
+  const [imageSrc, setImageSrc] = useState("/user-icon.svg");
   const [name, setName] = useState("");
   const [content, setContent] = useState<any>([]);
   const [isDrag, setIsDrag] = useState(false);
@@ -452,8 +470,14 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     [...e.dataTransfer.files].forEach(async (file, i) => {
       console.log(`… file[${i}].name = ${file.name}`);
       const receiverName = getChatName(currentChat);
-      sendFile(file, currentChat, receiverName, stompClientRef.current);
-      saveFile(dispatch, file, username, currentChat.type, receiverName);
+      sendFile(file, currentChat as Chat, receiverName, stompClientRef.current);
+      saveFile(
+        dispatch,
+        file,
+        username,
+        currentChat.type as ChatType,
+        receiverName
+      );
     });
   };
 
@@ -473,6 +497,33 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       }
       return chat;
     });
+  };
+
+  const parseMessageContent = (content: string): any => {
+    const regex = /https:\/\/[^\s"']+|[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}/g;
+    const parts = content.split(regex);
+    const urls = content.match(regex) || [];
+
+    return parts.reduce((acc: any, part, index) => {
+      acc.push(<span key={`text-${index}`}>{part}</span>);
+
+      if (index < urls.length) {
+        if (urls[index].startsWith("https")) {
+          acc.push(
+            <a key={urls[index]} href={urls[index]} target="_blank">
+              {urls[index]}
+            </a>
+          );
+        } else {
+          acc.push(
+            <a key={urls[index]} href={"mailto:" + urls[index]} target="_blank">
+              {urls[index]}
+            </a>
+          );
+        }
+      }
+      return acc;
+    }, []);
   };
 
   useEffect(() => {
@@ -495,8 +546,28 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       }
     };
 
+    const initInfo = async () => {
+      const response = (await getInfo()) as InfoMessages;
+      const infoChats = [];
+      for (const key in response) {
+        const infoChat = {
+          name: key,
+          image: "",
+          unreadCount: 0,
+          type: "info",
+          lastReadTime: 0,
+        } as InfoChat;
+        infoChats.push(infoChat);
+      }
+
+      dispatch({ type: ActionType.INFO_CHATS, payload: infoChats });
+      dispatch({ type: ActionType.INFO_MESSAGES, payload: response });
+    };
+
+    initInfo();
     fetchChats();
     loadMessagesAndFiles();
+    initInfo();
   }, []);
 
   useEffect(() => {
@@ -579,16 +650,22 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         setName(currentChat.botName);
         setImageSrc(currentChat.avatar);
         break;
+      case "info": {
+        setName(currentChat.name);
+        setImageSrc(currentChat.image);
+      }
     }
   }, [currentChat]);
 
   useEffect(() => {
     if (!currentChat) return;
-    let chatMessages;
+    let chatMessages: Message[] | InfoMessage[];
 
     switch (currentChat.type) {
       case ChatType.PRIVATE: {
-        chatMessages = messages[currentChat.type][currentChat.username];
+        chatMessages = messages[currentChat.type][
+          currentChat.username
+        ] as Message[];
         dispatch({
           type: ActionType.PRIVATE_CHATS,
           payload: updateReadCount(
@@ -602,7 +679,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         break;
       }
       case ChatType.GROUP: {
-        chatMessages = messages[currentChat.type][currentChat.id];
+        chatMessages = messages[currentChat.type][currentChat.id] as Message[];
         dispatch({
           type: ActionType.GROUP_CHATS,
           payload: updateReadCount(groupChats, "id", currentChat.id, 0),
@@ -612,7 +689,9 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         break;
       }
       case ChatType.BOT: {
-        chatMessages = messages[currentChat.type][currentChat.botName];
+        chatMessages = messages[currentChat.type][
+          currentChat.botName
+        ] as Message[];
         dispatch({
           type: ActionType.BOT_CHATS,
           payload: updateReadCount(botChats, "botName", currentChat.botName, 0),
@@ -621,25 +700,35 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         updateReadStatus(currentChat.type, currentChat.botName);
         break;
       }
+      case "info": {
+        chatMessages = infoMessages[currentChat.name] as InfoMessage[];
+      }
     }
 
     chatMessages = chatMessages ? chatMessages : [];
 
-    const chatContent = chatMessages.map((chatMessage) => {
-      const date = new Date(chatMessage.timestamp);
+    const chatContent = chatMessages.map((chatMessage, index) => {
+      const timestamp = chatMessage?.timestamp
+        ? chatMessage.timestamp
+        : Date.now();
+      const date = new Date(timestamp);
       const senderName = chatMessage.senderName;
       const isSender = !senderName || senderName === username;
-
+      console.log(chatMessage.type);
       switch (chatMessage.type) {
         case MessageType.TEXT: {
           return (
             <StyledMessage
-              key={senderName + chatMessage.timestamp}
+              key={senderName + timestamp + index}
               $isText={true}
               $isSender={isSender}
             >
-              <div className="content">{chatMessage.content}</div>
-              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+              <div className="content">
+                {parseMessageContent(chatMessage.content)}
+              </div>
+              <span>
+                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
+              </span>
             </StyledMessage>
           );
         }
@@ -648,21 +737,25 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         case MessageType.IMAGE_PNG: {
           return (
             <StyledMessage
-              key={senderName + chatMessage.timestamp}
+              key={senderName + timestamp + index}
               $isSender={isSender}
               $isText={false}
             >
               <div className="content">
-                <img src={chatMessage.content} />
+                <a href={chatMessage.link} target="_blank">
+                  <img src={chatMessage.content} width={320} />
+                </a>
               </div>
-              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+              <span>
+                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
+              </span>
             </StyledMessage>
           );
         }
         case MessageType.APPLICATION_PDF: {
           return (
             <StyledMessage
-              key={senderName + chatMessage.timestamp}
+              key={senderName + timestamp + index}
               $isSender={isSender}
               $isText={false}
             >
@@ -671,7 +764,9 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
                   <img src={"/pdf-icon.svg"} style={{ padding: 5 }} />
                 </a>
               </div>
-              <span>{date.getHours() + ":" + date.getMinutes()}</span>
+              <span>
+                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
+              </span>
             </StyledMessage>
           );
         }
@@ -695,6 +790,41 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
               />
             </StyledMessage>
           );
+        case MessageType.SVG: {
+          if (currentChat.type === "info") {
+            return (
+              <StyledMessage
+                key={senderName + timestamp + index}
+                $isSender={isSender}
+                $isText={false}
+              >
+                <div className="content">
+                  <a href={chatMessage.link} target="_blank">
+                    <img src={chatMessage.content} width={128} />
+                  </a>
+                </div>
+                <span>
+                  {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
+                </span>
+              </StyledMessage>
+            );
+          } else {
+            return (
+              <StyledMessage
+                key={senderName + timestamp + index}
+                $isSender={isSender}
+                $isText={false}
+              >
+                <div className="content">
+                  <img src={chatMessage.content} width={64} />
+                </div>
+                <span>
+                  {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
+                </span>
+              </StyledMessage>
+            );
+          }
+        }
         default:
           return <></>;
       }
@@ -714,12 +844,71 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           (chat) => chat.username != currentChat.username
         );
         dispatch({ type: ActionType.PRIVATE_CHATS, payload: newPrivateChats });
+
+        const newPrivateMessages = {
+          ...messages[ChatType.PRIVATE],
+        };
+        delete newPrivateMessages[currentChat.username];
+
+        dispatch({
+          type: ActionType.MESSAGES,
+          payload: {
+            ...messages,
+            [ChatType.PRIVATE]: newPrivateMessages,
+          },
+        });
+
         dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
-        const deletedChat = (await deletePrivateChat(
-          currentChat.username,
-          false
-        )) as any;
-        console.log(deletedChat);
+        deletePrivateChat(currentChat.username, false);
+        break;
+      }
+      case ChatType.BOT: {
+        const newBotChats = botChats.filter(
+          (chat) => chat.botName != currentChat.botName
+        );
+        dispatch({ type: ActionType.BOT_CHATS, payload: newBotChats });
+
+        const newBotMessages = {
+          ...messages[ChatType.BOT],
+        };
+        delete newBotMessages[currentChat.botName];
+
+        dispatch({
+          type: ActionType.MESSAGES,
+          payload: {
+            ...messages,
+            [ChatType.BOT]: newBotMessages,
+          },
+        });
+
+        dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+        deletePrivateChat(currentChat.botName, false);
+        break;
+      }
+      case ChatType.GROUP: {
+        /*
+        const newGroupChats = groupChats.filter(
+          (chat) => chat.name != currentChat.name
+        );
+        dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
+
+        const newGroupMessages = {
+          ...messages[ChatType.GROUP],
+        };
+        delete newGroupMessages[currentChat.name];
+
+        dispatch({
+          type: ActionType.MESSAGES,
+          payload: {
+            ...messages,
+            [ChatType.GROUP]: newGroupMessages,
+          },
+        });
+
+        dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+        deletePrivateChat(currentChat.name, false);
+        */
+        break;
       }
     }
   };
@@ -751,7 +940,9 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           </StyledChatHeader>
           <section>{content}</section>
 
-          <MessageComposer ref={stompClientRef} />
+          {currentChat.type !== "info" && (
+            <MessageComposer ref={stompClientRef} />
+          )}
         </>
       )}
     </StyledChat>

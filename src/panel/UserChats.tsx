@@ -13,6 +13,7 @@ import {
   ActionType,
   Chat,
   ChatType,
+  InfoChat,
   Message,
   Messages,
   PanelMode,
@@ -66,6 +67,7 @@ const StyledSearch = styled(InputField)`
     left: 16px;
   }
 `;
+
 const StyledProfile = styled(ProfilePicture)`
   @media only screen and (min-width: ${(props) =>
       props.theme.breakpoints.tablet}) {
@@ -73,13 +75,13 @@ const StyledProfile = styled(ProfilePicture)`
   }
 `;
 
-export default function UserChats() {
+const UserChats = () => {
   const {
-    state: { privateChats, groupChats, botChats, messages },
+    state: { privateChats, groupChats, botChats, messages, infoChats },
     dispatch,
   } = useContext(Context);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [fileredChats, setFilteredChats] = useState<Chat[]>([]);
+  const [chats, setChats] = useState<(Chat | InfoChat)[]>([]);
+  const [fileredChats, setFilteredChats] = useState<(Chat | InfoChat)[]>([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
 
   const handleChatClick = async (e: MouseEvent<HTMLButtonElement>) => {
@@ -106,7 +108,7 @@ export default function UserChats() {
               payload: {
                 id: newGroupChat.id,
                 name: newGroupChat.name,
-                image: newGroupChat.image,
+                image: newGroupChat.image || "/group-icon.svg",
                 type: ChatType.GROUP,
                 unreadCount: 0,
                 lastReadTime: 0,
@@ -149,7 +151,7 @@ export default function UserChats() {
             type: ActionType.CURRENT_CHAT,
             payload: {
               username: newPrivateChat.username,
-              avatar: newPrivateChat.avatar,
+              avatar: newPrivateChat.avatar || "/user-icon.svg",
               type: ChatType.PRIVATE,
               unreadCount: 0,
               lastReadTime: 0,
@@ -173,8 +175,21 @@ export default function UserChats() {
             type: ActionType.CURRENT_CHAT,
             payload: {
               botName: newBotChat.botName,
-              avatar: newBotChat.avatar,
+              avatar: newBotChat.avatar || "/user-icon.svg",
               type: ChatType.BOT,
+              unreadCount: 0,
+              lastReadTime: 0,
+            },
+          });
+          break;
+        }
+        case "info": {
+          dispatch({
+            type: ActionType.CURRENT_CHAT,
+            payload: {
+              name: name,
+              image: "/user-icon.svg",
+              type: "info",
               unreadCount: 0,
               lastReadTime: 0,
             },
@@ -189,10 +204,13 @@ export default function UserChats() {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.CREATE_CHAT });
   };
 
-  const getLastMessageTimestamp = (chat: Chat) => {
+  const getLastMessageTimestamp = (chat: Chat | InfoChat) => {
     const chatName = getChatName(chat);
 
     let timestamp = 0;
+    if (chat.type === "info") {
+      return timestamp;
+    }
     const chatMessages = messages[chat.type][chatName];
     if (chatMessages && chatMessages.length > 0) {
       timestamp = chatMessages[chatMessages.length - 1].timestamp;
@@ -236,9 +254,18 @@ export default function UserChats() {
   };
 
   useEffect(() => {
-    let allChats = [...privateChats, ...groupChats, ...botChats] as Chat[];
+    let allChats = [
+      ...infoChats,
+      ...privateChats,
+      ...groupChats,
+      ...botChats,
+    ] as (Chat | InfoChat)[];
 
     allChats = allChats.map((chat) => {
+      if (chat.type === "info") {
+        return chat;
+      }
+
       const chatName = getChatName(chat);
       const newChat = { ...chat };
       newChat.unreadCount = countUnreadMessages(
@@ -250,11 +277,13 @@ export default function UserChats() {
       return newChat;
     });
 
-    const sortedChats = allChats.sort((chat1: Chat, chat2: Chat) => {
-      return getLastMessageTimestamp(chat2) - getLastMessageTimestamp(chat1);
-    });
+    const sortedChats = allChats.sort(
+      (chat1: Chat | InfoChat, chat2: Chat | InfoChat) => {
+        return getLastMessageTimestamp(chat2) - getLastMessageTimestamp(chat1);
+      }
+    );
     setChats(sortedChats);
-  }, [privateChats, groupChats, botChats, messages]);
+  }, [privateChats, groupChats, botChats, infoChats, messages]);
 
   const switchToSettings = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.SETTINGS });
@@ -342,4 +371,6 @@ export default function UserChats() {
       )}
     </>
   );
-}
+};
+
+export default UserChats;

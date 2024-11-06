@@ -54,15 +54,13 @@ const StyledCounter = styled.div`
   text-align: center;
 `;
 
-export default function ChatItem(props: any) {
+const ChatItem = (props: any) => {
   const {
     state: { panelMode },
   } = useContext(Context);
   const [isSelected, setIsSelected] = useState(false);
   const { name, image, handleClick, unreadCount, isSelectMode, ...restProps } =
     props;
-  const defaultURL = image;
-  const avatarURL = defaultURL;
 
   const toggleSelect = (e: MouseEvent<HTMLDivElement>) => {
     handleClick(e);
@@ -71,7 +69,7 @@ export default function ChatItem(props: any) {
 
   const children = (
     <>
-      <StyledAvatar src={avatarURL} />
+      <StyledAvatar src={image} />
       <div>{name}</div>
       {unreadCount ? <StyledCounter>{unreadCount}</StyledCounter> : <></>}
     </>
@@ -127,4 +125,6 @@ export default function ChatItem(props: any) {
       return <StyledChatItem {...restProps}>{children}</StyledChatItem>;
     }
   }
-}
+};
+
+export default ChatItem;

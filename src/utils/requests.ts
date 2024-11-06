@@ -1,5 +1,5 @@
 
-import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
+import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, INFO_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
 import { Messages, Chats, GroupChat, PrivateChat, ChatType, BotChat } from "../context/types";
 
 enum HttpMethod {
@@ -158,7 +158,7 @@ export const addNewFriend = async (username: string) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({username}),
+    body: JSON.stringify({chatName: username}),
   };
   const response = await fetchRequest(url, options);
   return response;
@@ -184,13 +184,13 @@ interface FileParams{
 
 export const getFileById = async (id: string, params:FileParams): Promise<Blob> => {
   const {chatType, chatName, senderName} = params;
-  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType}&chatName=${chatName}&senderName=${senderName}`;
+  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType == ChatType.PRIVATE? chatType: chatType + "s"}&chatName=${chatName}&senderName=${senderName}`;
   const response = await fetchRequest(url);
   return response.blob();
 }
 
 export const updateReadStatus = async (chatType: ChatType, chatName: string) => {
-  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType}/${chatName}/status`;
+  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType == ChatType.PRIVATE? chatType: chatType + "s"}/${chatName}/status`;
   const options = {
     method: HttpMethod.PUT,
     headers: {
@@ -243,10 +243,16 @@ export const getChatMessages = async (chatType: string, chatName: string) => {
 }
 
 export const deletePrivateChat = async (username: string, isForBoth: boolean) => {
-  const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?username=${username}&isForBoth=${isForBoth}`;
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?username=${username}&isBoth=${isForBoth}`;
   const options = {
     method: HttpMethod.DELETE,
   };
   const response = await fetchRequest(url, options);
-  return response.json()
+  return response;
+}
+
+export const getInfo = async () => {
+  const url = `${BASE_URL}${INFO_ROUTE}`;
+  const response = await fetchRequest(url);
+  return response.json();
 }

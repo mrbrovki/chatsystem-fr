@@ -1,8 +1,8 @@
-import { ChatType, Chat, Action, MessageType, ActionType } from "../context/types";
+import { ChatType, Chat, Action, MessageType, ActionType, InfoChat } from "../context/types";
 
 
 
-export const getChatName = (chat: Chat) => {
+export const getChatName = (chat: Chat | InfoChat) => {
   switch (chat.type) {
     case ChatType.PRIVATE:
       return chat.username;
@@ -10,6 +10,8 @@ export const getChatName = (chat: Chat) => {
       return chat.botName;
     case ChatType.GROUP:
       return chat.id;
+    case "info":
+      return chat.name;
   }
 }
 
@@ -36,3 +38,8 @@ export const saveFile = (
       },
     });
   };
+
+
+export const padZero = (num:number) => {
+    return num < 10 ? '0' + num : num;
+}

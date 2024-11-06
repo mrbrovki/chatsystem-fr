@@ -1,6 +1,7 @@
 export enum MessageType {
   JOIN = "join",
   LEAVE = "leave",
+  SVG = "image/svg+xml",
   IMAGE_JPEG = "image/jpeg",
   IMAGE_PNG = "image/png",
   IMAGE_GIF = "image/gif",
@@ -17,6 +18,13 @@ export enum ChatType{
   PRIVATE="private", GROUP="group", BOT="bot"
 }
 
+export interface InfoChat{
+  name: string;
+  image: string;
+  type: "info";
+  unreadCount: number;
+  lastReadTime: number;
+}
 export interface PrivateChat{
   username: string;
   avatar: string;
@@ -49,6 +57,7 @@ export interface Message{
   content: string;
   timestamp: number;
   senderName: string;
+  link?: string;
 } 
 
 export interface Messages{
@@ -63,6 +72,18 @@ export interface Messages{
   }
 }
 
+export interface InfoMessages{
+  [id: string]: InfoMessage[]
+}
+
+export interface InfoMessage{
+  content: string;
+  senderName: string;
+  type: MessageType;
+  timestamp?: number;
+  link: string;
+}
+
 export interface Chats{
   [ChatType.PRIVATE]: PrivateChat[];
   [ChatType.GROUP]: GroupChat[];
@@ -75,18 +96,20 @@ export enum PanelMode{
   USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP, SETTINGS
 }
 export enum ActionType{
-  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD
+  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD, INFO_CHATS, INFO_MESSAGES
 }
 
 export interface State {
   username: string;
   avatar: string,
-  currentChat: Chat | null;
+  currentChat: Chat | InfoChat |null;
   privateChats: PrivateChat[];
   groupChats: GroupChat[];
   botChats: BotChat[];
   panelMode: PanelMode;
   messages: Messages;
+  infoChats: InfoChat[];
+  infoMessages: InfoMessages;
 }
 
 interface ADD_MESSAGE_PAYLOAD{
@@ -115,7 +138,7 @@ interface UNREAD_PAYLOAD{
 export type Action =
   | { type: ActionType.USERNAME; payload: string }
   | { type: ActionType.AVATAR; payload: string }
-  | { type: ActionType.CURRENT_CHAT; payload: Chat | null }
+  | { type: ActionType.CURRENT_CHAT; payload: Chat | InfoChat |null }
   | { type: ActionType.PRIVATE_CHATS; payload: PrivateChat[] }
   | { type: ActionType.GROUP_CHATS; payload: GroupChat[] }
   | { type: ActionType.BOT_CHATS; payload: BotChat[] }
@@ -131,6 +154,8 @@ export type Action =
   | { type: ActionType.ADD_BOT_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.ADD_GROUP_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.RESET_UNREAD, payload: UNREAD_PAYLOAD} 
+  | { type: ActionType.INFO_CHATS, payload: InfoChat[]}
+  | { type: ActionType.INFO_MESSAGES, payload: InfoMessages}
   | { type: ActionType.RESET, payload: null};
 
 export enum BtnPriority{

@@ -60,6 +60,11 @@ const StyledInputContainer = styled.div<{
       outline-color: ${({ theme, $priority }) =>
         theme.colors.input[$priority].focus};
     }
+
+    @media only screen and (max-width: ${(props) =>
+        props.theme.breakpoints.tablet}) {
+      font-size: 1rem;
+    }
   }
 
   & > img {

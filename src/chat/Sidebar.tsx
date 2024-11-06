@@ -72,7 +72,7 @@ const SettingsIcon = styled.img`
 `;
 
 interface SidebarProps {
-  closeConnection: () => void; // Replace `any` with a more specific type if possible
+  closeConnection: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {

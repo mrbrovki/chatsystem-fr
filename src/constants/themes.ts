@@ -70,7 +70,7 @@ export const theme: DefaultTheme = {
         background: "#fff",
         outline: "#d9d9d9",
         text: "black",
-        placeholder: "black",
+        placeholder: "#A8A8A8",
         label: "black",
         error: "red",
         focus: "black",

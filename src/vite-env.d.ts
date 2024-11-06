@@ -9,5 +9,6 @@ interface ImportMeta {
     VITE_API_CHATS_ROUTE: string;
     VITE_API_AUTH_ROUTE: string;
     VITE_API_USERS_ROUTE: string;
+    VITE_API_INFO_ROUTE: string;
   };
 }

@@ -30,6 +30,8 @@ export const initState: State = {
   privateChats: [],
   groupChats: [],
   botChats: [],
+  infoChats: [],
+  infoMessages: {},
   panelMode: PanelMode.USER_CHATS,
   messages: {
     private: {},
@@ -44,3 +46,4 @@ export const FILES_ROUTE = import.meta.env.VITE_API_FILES_ROUTE
 export const CHATS_ROUTE = import.meta.env.VITE_API_CHATS_ROUTE;
 export const AUTH_ROUTE = import.meta.env.VITE_API_AUTH_ROUTE;
 export const USERS_ROUTE = import.meta.env.VITE_API_USERS_ROUTE;
+export const INFO_ROUTE = import.meta.env.VITE_API_INFO_ROUTE;

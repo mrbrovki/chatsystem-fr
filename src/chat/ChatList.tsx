@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import ChatItem from "./ChatItem";
-import { Chat, ChatType } from "../context/types";
+import { Chat, ChatType, InfoChat } from "../context/types";
 
 const StyledChatList = styled.div`
   margin-top: 1rem;
@@ -17,7 +17,7 @@ const truncateStr = (str: string) => {
 };
 
 const ChatList: React.FC<{
-  chats: Chat[];
+  chats: (Chat | InfoChat)[];
   handleClick: any;
   isSelectMode: boolean;
 }> = ({ chats, handleClick, isSelectMode }) => {
@@ -34,7 +34,7 @@ const ChatList: React.FC<{
                 data-name={chat.id}
                 data-id={chat.id}
                 name={truncateStr(chat.name)}
-                image={chat.image}
+                image={chat.image || "/group-icon.svg"}
                 unreadCount={chat.unreadCount}
                 isSelectMode={isSelectMode}
               />
@@ -47,7 +47,7 @@ const ChatList: React.FC<{
                 data-type={chat.type}
                 data-name={chat.username}
                 name={truncateStr(chat.username)}
-                image={chat.avatar}
+                image={chat.avatar || "/user-icon.svg"}
                 unreadCount={chat.unreadCount}
                 isSelectMode={isSelectMode}
               />
@@ -59,8 +59,21 @@ const ChatList: React.FC<{
                 handleClick={handleClick}
                 data-type={chat.type}
                 data-name={chat.botName}
-                name={truncateStr(chat.botName)}
-                image={chat.avatar}
+                name={truncateStr(chat.botName) + " 🤖"}
+                image={chat.avatar || "/user-icon.svg"}
+                unreadCount={chat.unreadCount}
+                isSelectMode={isSelectMode}
+              />
+            );
+          case "info":
+            return (
+              <ChatItem
+                key={chat.name}
+                handleClick={handleClick}
+                data-type={chat.type}
+                data-name={chat.name}
+                name={truncateStr(chat.name)}
+                image={chat.image || "/user-icon.svg"}
                 unreadCount={chat.unreadCount}
                 isSelectMode={isSelectMode}
               />

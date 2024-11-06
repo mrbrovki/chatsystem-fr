@@ -3,10 +3,10 @@ import {
   forwardRef,
   MutableRefObject,
   useContext,
-  useRef,
+  useState,
 } from "react";
 import { Context } from "../context";
-import { ActionType, ChatType, MessageType } from "../context/types";
+import { ActionType, Chat, ChatType, MessageType } from "../context/types";
 import { getChatName, saveFile } from "../utils/utils";
 import { Client } from "@stomp/stompjs";
 import styled from "styled-components";
@@ -43,6 +43,12 @@ const StyledSend = styled.div`
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+
+    @media only screen and (max-width: ${(props) =>
+        props.theme.breakpoints.tablet}) {
+      font-size: 1rem;
+    }
+
     &::placeholder {
       color: #00000058;
     }
@@ -68,7 +74,7 @@ const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
     state: { username, currentChat },
     dispatch,
   } = useContext(Context);
-  const messageInput = useRef("");
+  const [value, setValue] = useState("");
 
   const handleSend = async () => {
     if (!stompClientRef || !currentChat) return;
@@ -76,7 +82,7 @@ const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
     const message = {
       type: MessageType.TEXT,
       timestamp: Date.now(),
-      content: messageInput.current,
+      content: value,
       senderName: username,
     };
 
@@ -140,10 +146,11 @@ const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
         break;
       }
     }
+    setValue("");
   };
 
   const onMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    messageInput.current = e.target.value;
+    setValue(e.target.value);
   };
 
   const handleKeyPress = (e: any) => {
@@ -160,8 +167,14 @@ const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
     const files = e.target.files as FileList;
     const receiverName = getChatName(currentChat);
     for (const file of files) {
-      sendFile(file, currentChat, receiverName, stompClientRef.current);
-      saveFile(dispatch, file, username, currentChat.type, receiverName);
+      sendFile(file, currentChat as Chat, receiverName, stompClientRef.current);
+      saveFile(
+        dispatch,
+        file,
+        username,
+        currentChat.type as ChatType,
+        receiverName
+      );
     }
   };
 
@@ -175,6 +188,7 @@ const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
           placeholder="message or drag file"
           onChange={onMessageChange}
           onKeyDown={handleKeyPress}
+          value={value}
         />
         <label>
           <input type="file" onChange={handleUpload} multiple />
