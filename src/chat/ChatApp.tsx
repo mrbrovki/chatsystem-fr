@@ -6,31 +6,27 @@ import { useRef } from "react";
 import { Client } from "@stomp/stompjs";
 
 const StyledMain = styled.main`
-  width: 100%;
-  height: 100vh;
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
   background-color: ${(props) => props.theme.colors.main.background};
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 1rem;
+  justify-content: space-between;
+  gap: 1.5rem;
+  position: relative;
 
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: center;
-    padding: 0 1rem;
-    justify-content: space-between;
-    gap: 20px;
-
-    & > * {
-      height: 95%;
-      border-radius: var(--components-border-radius);
-      background-color: #fff;
-    }
+  & > * {
+    border-radius: 1rem;
   }
 
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
+    display: block;
+    padding: 0;
+
     & > * {
-      height: 100%;
-      background-color: #fff;
+      border-radius: 0;
     }
   }
 `;

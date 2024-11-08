@@ -8,8 +8,8 @@ const StyledProfilePicture = styled.img`
   transition: transform 0.3s;
 `;
 interface ProfilePictureProps {
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   handleClick: () => void;
   className?: string;
 }
@@ -28,8 +28,8 @@ const ProfilePicture = (props: ProfilePictureProps) => {
   return (
     <StyledProfilePicture
       src={currentSrc}
-      width={props.width}
-      height={props.height}
+      width={props?.width}
+      height={props?.height}
       onClick={props.handleClick}
       className={props.className}
     />

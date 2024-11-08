@@ -5,9 +5,12 @@ import { BtnPriority } from './context/types';
 declare module 'styled-components' {
   export interface DefaultTheme {
     breakpoints: {
-     mobile: string,
-     tablet: string,
-     desktop: string,
+     xs: string,
+     sm: string,
+     md: string,
+     lg: string,
+     xl: string,
+     xxl: string,
    }, 
    colors: {
     text: string,

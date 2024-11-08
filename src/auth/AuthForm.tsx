@@ -51,8 +51,7 @@ const StyledAuth = styled.main<{ $mode: AuthMode }>`
     padding: 0 50px;
   }
 
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
     ${StyledLogoContainer} {
       display: none;
     }

@@ -9,22 +9,30 @@ const StyledSidebar = styled.aside`
   & > *:hover {
     cursor: pointer;
   }
+  width: 8rem;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  background: ${(props) => props.theme.colors.sidebar};
+  padding: 30px 10px;
 
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
-    width: 120px;
-    display: flex;
-    flex-flow: column nowrap;
-    align-items: center;
-    background: ${(props) => props.theme.colors.sidebar};
-    padding: 30px 10px;
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xl}) {
   }
-
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xl}) {
     display: none;
   }
+
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
+  }
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.sm}) {
+  }
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xs}) {
+  }
+
+  @media only screen and (min-width: ${(props) => props.theme.breakpoints.md}) {
+  }
 `;
+
 const LogoutIcon = styled.img`
   width: 80%;
   margin-top: auto;
@@ -36,7 +44,7 @@ const LogoutIcon = styled.img`
   }
 `;
 const StyledEditProfile = styled.div`
-  height: 140px;
+  height: 8rem;
   display: flex;
   width: 100%;
   flex-flow: column nowrap;
@@ -47,6 +55,10 @@ const StyledEditProfile = styled.div`
   transition: background-color 0.3s;
 
   gap: 10px;
+
+  & > img {
+    width: 80%;
+  }
 
   & > p {
     color: white;
@@ -95,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
   return (
     <StyledSidebar>
       <StyledEditProfile onClick={switchToEdit}>
-        <ProfilePicture width={80} height={80} handleClick={switchToEdit} />
+        <ProfilePicture handleClick={switchToEdit} />
         <p>Profile</p>
       </StyledEditProfile>
       <SettingsIcon

@@ -11,12 +11,24 @@ import Settings from "./Settings";
 const StyledPanel = styled.div`
   background-color: ${(props) => props.theme.colors.panel.background};
   position: relative;
-  padding: 32px;
-  flex: 3;
+  padding: 2rem;
   display: flex;
   flex-flow: column nowrap;
   gap: 1rem 0;
+  width: 30rem;
   height: 100%;
+
+  transition: width 0.3s ease-in;
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xxl}) {
+    width: 25rem;
+  }
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.lg}) {
+    width: 20rem;
+  }
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
+    transition: none;
+    width: 100vw;
+  }
 `;
 
 export const StyledPanelButton = styled.button<{

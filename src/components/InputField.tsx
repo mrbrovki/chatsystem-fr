@@ -62,7 +62,7 @@ const StyledInputContainer = styled.div<{
     }
 
     @media only screen and (max-width: ${(props) =>
-        props.theme.breakpoints.tablet}) {
+        props.theme.breakpoints.md}) {
       font-size: 1rem;
     }
   }

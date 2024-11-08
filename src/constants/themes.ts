@@ -3,9 +3,12 @@ import { BtnPriority } from "../context/types";
 
 export const theme: DefaultTheme = {
   breakpoints: {
-    mobile: "480px",
-    tablet: "768px",
-    desktop: "2048px",
+    xs: "375px",
+    sm: "576px",
+    md: "768px",  
+    lg: "1024px", 
+    xl: "1280px",
+    xxl: "1440px",
   },
   colors: {
     text: "#333333",

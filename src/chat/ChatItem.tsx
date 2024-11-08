@@ -7,13 +7,16 @@ export const StyledAvatar = styled.img`
   box-shadow: 0 0 2px #00000072;
   border-radius: 48px;
   float: left;
-  height: 48px;
-  width: 48px;
+  width: 4rem;
+  height: 4rem;
 
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
-    width: 64px;
-    height: 64px;
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xl}) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.xs}) {
+    width: 3rem;
+    height: 3rem;
   }
 `;
 
@@ -32,9 +35,12 @@ const StyledChatItem = styled.div`
 
     cursor: pointer;
   }
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
     font-size: 1.25rem;
+  }
+
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.sm}) {
+    font-size: 1rem;
   }
 `;
 

@@ -24,6 +24,12 @@ const GlobalStyles = createGlobalStyle`
     font-optical-sizing: auto;
     font-weight: 700;
     font-style: normal;
+
+     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   p{
     

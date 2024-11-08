@@ -37,8 +37,7 @@ const SettingsIcon = styled.img`
     transform: rotateZ(90deg);
   }
 
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (min-width: ${(props) => props.theme.breakpoints.xl}) {
     display: none;
   }
 `;
@@ -69,8 +68,7 @@ const StyledSearch = styled(InputField)`
 `;
 
 const StyledProfile = styled(ProfilePicture)`
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (min-width: ${(props) => props.theme.breakpoints.xl}) {
     display: none;
   }
 `;
@@ -325,6 +323,13 @@ const UserChats = () => {
         onClick={toggleSelect}
       />
       <img src="/trash-icon.svg" width={32} height={32} onClick={undefined} />
+      <StyledProfile width={32} height={32} handleClick={switchToEdit} />
+      <SettingsIcon
+        src="/settings-icon.svg"
+        width={32}
+        height={32}
+        onClick={switchToSettings}
+      />
     </>
   );
 
@@ -333,18 +338,12 @@ const UserChats = () => {
       <StyledHeader>
         <StyledControl>
           <OptionsToggle children={optionsChildren} count={2} />
-          <StyledProfile width={32} height={32} handleClick={switchToEdit} />
+
           <img
             src="/edit-icon.svg"
             width={32}
             height={32}
             onClick={switchToCreateMode}
-          />
-          <SettingsIcon
-            src="/settings-icon.svg"
-            width={32}
-            height={32}
-            onClick={switchToSettings}
           />
         </StyledControl>
 

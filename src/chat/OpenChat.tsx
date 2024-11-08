@@ -44,18 +44,20 @@ import OptionsToggle from "../components/OptionsToggle";
 import { WEBSOCKET } from "../constants";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
+  background-color: ${(props) => props.theme.colors.panel.background};
+  height: 100svh;
+
   & > section {
     gap: 10px;
     overflow-y: scroll;
     padding: 20px 16px 80px 16px;
     display: flex;
     flex-flow: column nowrap;
-    height: calc(100% - 160px);
+    height: calc(100% - 10rem);
   }
 
-  @media only screen and (min-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
-    flex: ${(props: any) => (props.$isFocused ? 8 : 4)};
+  @media only screen and (min-width: ${(props) => props.theme.breakpoints.md}) {
+    flex: ${(props: any) => (props.$isFocused ? 1 : 1)};
     opacity: ${(props: any) => (props.$isFocused ? 1 : 0.3)};
     transition: all 0.3s;
     position: relative;
@@ -63,35 +65,37 @@ const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
     ${({ $isDrag }) => {
       if ($isDrag) {
         return css`
-          flex: 9;
+          flex: 1;
           background-color: #0000009;
         `;
       }
     }}
   }
 
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
+    position: absolute;
+    width: 100vw;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+
+    transition: transform 0.3s;
     ${(props: any) => {
       if (props.$isFocused) {
         return css`
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+          transform: translateX(-100%);
         `;
       } else {
         return css`
-          display: none;
+          transform: translateX(0);
         `;
       }
-    }}
+    }};
   }
 `;
 
 const StyledChatHeader = styled.div`
-  height: 90px;
+  height: 5rem;
   padding: 0 20px;
   display: flex;
   flex-flow: row nowrap;
@@ -106,8 +110,7 @@ const StyledChatHeader = styled.div`
     &:hover {
       cursor: pointer;
     }
-    @media only screen and (min-width: ${(props) =>
-        props.theme.breakpoints.tablet}) {
+    @media screen and (min-width: ${(props) => props.theme.breakpoints.md}) {
       display: none;
     }
   }
@@ -115,6 +118,15 @@ const StyledChatHeader = styled.div`
 
 const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   max-width: 24rem;
+
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.lg}) {
+    max-width: 20rem;
+  }
+
+  @media screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
+    max-width: 18rem;
+  }
+
   align-self: ${({ $isSender }) => ($isSender ? "flex-end" : "flex-start")};
 
   .content {
@@ -172,8 +184,7 @@ const StyledCurrentChat = styled.div`
   align-items: center;
   gap: 0.5rem;
 
-  @media only screen and (max-width: ${(props) =>
-      props.theme.breakpoints.tablet}) {
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
     margin-left: 1rem;
     margin-right: auto;
 
