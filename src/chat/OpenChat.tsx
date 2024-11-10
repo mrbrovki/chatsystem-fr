@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { getChatName, padZero, saveFile } from "../utils/utils";
+import { getChatName, saveFile } from "../utils/utils";
 import styled, { css } from "styled-components";
 import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
@@ -19,7 +19,6 @@ import {
   Chats,
   ChatType,
   InfoChat,
-  InfoMessage,
   InfoMessages,
   Message,
   Messages,
@@ -27,10 +26,8 @@ import {
   PanelMode,
 } from "../context/types";
 import { Client, Message as StompMessage } from "@stomp/stompjs";
-import ReactPlayer from "react-player";
 import MessageComposer from "./MessageComposer";
 import {
-  updateReadStatus,
   getGroupById,
   getFileById,
   getMessages,
@@ -42,18 +39,22 @@ import {
 import { sendFile } from "../utils/stompUtils";
 import OptionsToggle from "../components/OptionsToggle";
 import { WEBSOCKET } from "../constants";
+import ChatContent from "./ChatContent";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   background-color: ${(props) => props.theme.colors.panel.background};
-  height: 100svh;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: stretch;
 
   & > section {
     gap: 10px;
     overflow-y: scroll;
-    padding: 20px 16px 80px 16px;
+    padding: 20px 16px 16px 16px;
     display: flex;
+    flex: 1;
     flex-flow: column nowrap;
-    height: calc(100% - 10rem);
   }
 
   @media only screen and (min-width: ${(props) => props.theme.breakpoints.md}) {
@@ -116,68 +117,6 @@ const StyledChatHeader = styled.div`
   }
 `;
 
-const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
-  max-width: 24rem;
-
-  @media screen and (max-width: ${(props) => props.theme.breakpoints.lg}) {
-    max-width: 20rem;
-  }
-
-  @media screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
-    max-width: 18rem;
-  }
-
-  align-self: ${({ $isSender }) => ($isSender ? "flex-end" : "flex-start")};
-
-  .content {
-    padding: 16px;
-    box-shadow: 0 0 8px #00000042;
-
-    a {
-      color: inherit;
-      word-wrap: break-word;
-    }
-
-    ${({ $isSender }) => {
-      if ($isSender) {
-        return css`
-          border-radius: 20px 20px 0 20px;
-          background-color: ${(props) =>
-            props.theme.colors.message.self.background};
-          color: ${(props) => props.theme.colors.message.self.text};
-        `;
-      } else {
-        return css`
-          border-radius: 20px 20px 20px 0;
-          background-color: ${(props) =>
-            props.theme.colors.message.other.background};
-          color: ${(props) => props.theme.colors.message.other.text};
-        `;
-      }
-    }}
-
-    ${({ $isText }) => {
-      if (!$isText) {
-        return css`
-          padding: 0px;
-          overflow: hidden;
-          border-radius: 10px;
-
-          img {
-            display: block;
-          }
-        `;
-      }
-    }}
-  }
-  & > span {
-    color: #bfbfbf;
-    font-weight: 600;
-    font-size: 12px;
-    float: ${({ $isSender }) => ($isSender ? "right" : "left")};
-  }
-`;
-
 const StyledCurrentChat = styled.div`
   display: flex;
   flex-flow: row nowrap;
@@ -205,16 +144,13 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       panelMode,
       messages,
       privateChats,
-      groupChats,
       botChats,
-      infoMessages,
     },
     dispatch,
   } = useContext(Context);
 
   const [imageSrc, setImageSrc] = useState("/user-icon.svg");
   const [name, setName] = useState("");
-  const [content, setContent] = useState<any>([]);
   const [isDrag, setIsDrag] = useState(false);
 
   const messagesRef = useRef<Messages>(messages);
@@ -492,51 +428,6 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     });
   };
 
-  const updateReadCount = (
-    chats: Chat[],
-    prop: string,
-    name: string,
-    unreadCount: number
-  ) => {
-    return chats.map((chat: any) => {
-      if (chat[prop] === name) {
-        return {
-          ...chat,
-          lastReadTime: Date.now(),
-          unreadCount,
-        };
-      }
-      return chat;
-    });
-  };
-
-  const parseMessageContent = (content: string): any => {
-    const regex = /https:\/\/[^\s"']+|[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}/g;
-    const parts = content.split(regex);
-    const urls = content.match(regex) || [];
-
-    return parts.reduce((acc: any, part, index) => {
-      acc.push(<span key={`text-${index}`}>{part}</span>);
-
-      if (index < urls.length) {
-        if (urls[index].startsWith("https")) {
-          acc.push(
-            <a key={urls[index]} href={urls[index]} target="_blank">
-              {urls[index]}
-            </a>
-          );
-        } else {
-          acc.push(
-            <a key={urls[index]} href={"mailto:" + urls[index]} target="_blank">
-              {urls[index]}
-            </a>
-          );
-        }
-      }
-      return acc;
-    }, []);
-  };
-
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -668,181 +559,6 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     }
   }, [currentChat]);
 
-  useEffect(() => {
-    if (!currentChat) return;
-    let chatMessages: Message[] | InfoMessage[];
-
-    switch (currentChat.type) {
-      case ChatType.PRIVATE: {
-        chatMessages = messages[currentChat.type][
-          currentChat.username
-        ] as Message[];
-        dispatch({
-          type: ActionType.PRIVATE_CHATS,
-          payload: updateReadCount(
-            privateChats,
-            "username",
-            currentChat.username,
-            0
-          ),
-        });
-        updateReadStatus(currentChat.type, currentChat.username);
-        break;
-      }
-      case ChatType.GROUP: {
-        chatMessages = messages[currentChat.type][currentChat.id] as Message[];
-        dispatch({
-          type: ActionType.GROUP_CHATS,
-          payload: updateReadCount(groupChats, "id", currentChat.id, 0),
-        });
-
-        updateReadStatus(currentChat.type, currentChat.name);
-        break;
-      }
-      case ChatType.BOT: {
-        chatMessages = messages[currentChat.type][
-          currentChat.botName
-        ] as Message[];
-        dispatch({
-          type: ActionType.BOT_CHATS,
-          payload: updateReadCount(botChats, "botName", currentChat.botName, 0),
-        });
-
-        updateReadStatus(currentChat.type, currentChat.botName);
-        break;
-      }
-      case "info": {
-        chatMessages = infoMessages[currentChat.name] as InfoMessage[];
-      }
-    }
-
-    chatMessages = chatMessages ? chatMessages : [];
-
-    const chatContent = chatMessages.map((chatMessage, index) => {
-      const timestamp = chatMessage?.timestamp
-        ? chatMessage.timestamp
-        : Date.now();
-      const date = new Date(timestamp);
-      const senderName = chatMessage.senderName;
-      const isSender = !senderName || senderName === username;
-      console.log(chatMessage.type);
-      switch (chatMessage.type) {
-        case MessageType.TEXT: {
-          return (
-            <StyledMessage
-              key={senderName + timestamp + index}
-              $isText={true}
-              $isSender={isSender}
-            >
-              <div className="content">
-                {parseMessageContent(chatMessage.content)}
-              </div>
-              <span>
-                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
-              </span>
-            </StyledMessage>
-          );
-        }
-        case MessageType.IMAGE_GIF:
-        case MessageType.IMAGE_JPEG:
-        case MessageType.IMAGE_PNG: {
-          return (
-            <StyledMessage
-              key={senderName + timestamp + index}
-              $isSender={isSender}
-              $isText={false}
-            >
-              <div className="content">
-                <a href={chatMessage.link} target="_blank">
-                  <img src={chatMessage.content} width={320} />
-                </a>
-              </div>
-              <span>
-                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
-              </span>
-            </StyledMessage>
-          );
-        }
-        case MessageType.APPLICATION_PDF: {
-          return (
-            <StyledMessage
-              key={senderName + timestamp + index}
-              $isSender={isSender}
-              $isText={false}
-            >
-              <div className="content">
-                <a href={chatMessage.content} target="_blank">
-                  <img src={"/pdf-icon.svg"} style={{ padding: 5 }} />
-                </a>
-              </div>
-              <span>
-                {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
-              </span>
-            </StyledMessage>
-          );
-        }
-        case MessageType.VIDEO_AVI:
-        case MessageType.VIDEO_MOV:
-        case MessageType.VIDEO_WEBM:
-        case MessageType.VIDEO_MP4:
-          return (
-            <StyledMessage
-              key={senderName + chatMessage.timestamp}
-              $isSender={isSender}
-              $isText={false}
-            >
-              <ReactPlayer
-                url={chatMessage.content}
-                controls
-                volume={1}
-                height="100%"
-                width="100%"
-                style={{ borderRadius: 10, overflow: "hidden" }}
-              />
-            </StyledMessage>
-          );
-        case MessageType.SVG: {
-          if (currentChat.type === "info") {
-            return (
-              <StyledMessage
-                key={senderName + timestamp + index}
-                $isSender={isSender}
-                $isText={false}
-              >
-                <div className="content">
-                  <a href={chatMessage.link} target="_blank">
-                    <img src={chatMessage.content} width={128} />
-                  </a>
-                </div>
-                <span>
-                  {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
-                </span>
-              </StyledMessage>
-            );
-          } else {
-            return (
-              <StyledMessage
-                key={senderName + timestamp + index}
-                $isSender={isSender}
-                $isText={false}
-              >
-                <div className="content">
-                  <img src={chatMessage.content} width={64} />
-                </div>
-                <span>
-                  {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
-                </span>
-              </StyledMessage>
-            );
-          }
-        }
-        default:
-          return <></>;
-      }
-    });
-    setContent(chatContent);
-  }, [currentChat, messages, username]);
-
   const back = () => {
     dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
@@ -949,7 +665,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
             </StyledCurrentChat>
             <OptionsToggle children={optionsChildren} count={1} />
           </StyledChatHeader>
-          <section>{content}</section>
+          <ChatContent />
 
           {currentChat.type !== "info" && (
             <MessageComposer ref={stompClientRef} />
