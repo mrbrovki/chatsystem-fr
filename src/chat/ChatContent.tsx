@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { RefObject, useContext, useEffect, useRef, useState } from "react";
 import { Context } from "../context";
 import {
   ActionType,
@@ -75,15 +75,13 @@ const StyledMessage = styled.div<{ $isSender: boolean; $isText: boolean }>`
   }
 `;
 
-// const ScrollToBottom = styled.img`
-//   position: absolute;
-//   z-index: 10;
-//   top: 0;
-//   width: 1rem;
-//   height: 1rem;
-// `;
+const ChatContent: React.FC<{
+  inputRef: RefObject<HTMLInputElement>;
+  headerRef: RefObject<HTMLElement>;
+}> = ({ inputRef, headerRef }) => {
+  console.log(inputRef);
+  console.log(headerRef);
 
-const ChatContent = () => {
   const {
     state: {
       currentChat,
@@ -98,13 +96,8 @@ const ChatContent = () => {
   } = useContext(Context);
   const [content, setContent] = useState<any>([]);
   const scrollRef = useRef<HTMLElement>(null);
-
-  // const scrollToBottom = () => {
-  //   if (scrollRef.current) {
-  //     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  //   }
-  // };
-
+  //console.log(inputRef);
+  //console.log(headerRef);
   const updateReadCount = (
     chats: Chat[],
     prop: string,
@@ -151,7 +144,7 @@ const ChatContent = () => {
           payload: updateReadCount(groupChats, "id", currentChat.id, 0),
         });
 
-        updateReadStatus(currentChat.type, currentChat.name);
+        updateReadStatus(currentChat.type, currentChat.id);
         break;
       }
       case ChatType.BOT: {
@@ -297,28 +290,6 @@ const ChatContent = () => {
     });
     setContent(chatContent);
   }, [currentChat, messages, username]);
-
-  const viewHeightRef = useRef<number>();
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    const ref = scrollRef.current;
-    viewHeightRef.current = ref.clientHeight;
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (viewHeightRef.current == undefined) return;
-      const deltaView = ref.clientHeight - viewHeightRef.current;
-      viewHeightRef.current = ref.clientHeight;
-      ref.scrollBy(0, -deltaView);
-    });
-
-    resizeObserver.observe(ref);
-
-    return () => {
-      // Clean up the observer on component unmount
-      resizeObserver.disconnect();
-    };
-  }, [content]);
 
   const parseMessageContent = (content: string): any => {
     const regex = /https:\/\/[^\s"']+|[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}/g;

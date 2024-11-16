@@ -23,8 +23,9 @@ const StyledImageUpload = styled.div`
     margin: 0 auto;
     width: 120px;
     height: 120px;
-    border-radius: 100%;
-    box-shadow: 0 0 5px #00000056;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px #00000042;
   }
 
   img:nth-of-type(2) {
@@ -49,6 +50,7 @@ const AvatarUpload = (props: AvatarUploadProps) => {
       <label htmlFor={props.htmlFor}>
         <input
           type="file"
+          accept="image/*"
           onChange={props.handleChange}
           name={props.name}
           id={props.id}

@@ -1,6 +1,6 @@
 
 import { AUTH_ROUTE, BASE_URL, CHATS_ROUTE, FILES_ROUTE, INFO_ROUTE, LoginFormData, MESSAGES_ROUTE, SignupFormData, USERS_ROUTE } from "../constants";
-import { Messages, Chats, GroupChat, PrivateChat, ChatType, BotChat } from "../context/types";
+import { Messages, Chats, GroupChat, PrivateChat, ChatType, BotChat, DeleteChats } from "../context/types";
 
 enum HttpMethod {
   POST = "POST",
@@ -148,7 +148,7 @@ export const createGroup = async (formData: FormData) => {
   };
 
   const response = await fetchRequest(url, options);
-  return response.json();
+  return response;
 }
 
 export const addNewFriend = async (username: string) => {
@@ -184,7 +184,7 @@ interface FileParams{
 
 export const getFileById = async (id: string, params:FileParams): Promise<Blob> => {
   const {chatType, chatName, senderName} = params;
-  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType == ChatType.PRIVATE? chatType: chatType + "s"}&chatName=${chatName}&senderName=${senderName}`;
+  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType}&chatName=${chatName}&senderName=${senderName}`;
   const response = await fetchRequest(url);
   return response.blob();
 }
@@ -244,6 +244,37 @@ export const getChatMessages = async (chatType: string, chatName: string) => {
 
 export const deletePrivateChat = async (username: string, isForBoth: boolean) => {
   const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?username=${username}&isBoth=${isForBoth}`;
+  const options = {
+    method: HttpMethod.DELETE,
+  };
+  const response = await fetchRequest(url, options);
+  return response;
+}
+
+export const deleteBotChat = async (botName: string) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/bots/delete?botName=${botName}`;
+  const options = {
+    method: HttpMethod.DELETE,
+  };
+  const response = await fetchRequest(url, options);
+  return response;
+}
+
+export const deleteChats = async (chats: DeleteChats) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}`;
+  const options = {
+    method: HttpMethod.DELETE,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(chats),
+  };
+  const response = await fetchRequest(url, options);
+  return response;
+}
+
+export const leaveGroup = async (groupId: string) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/groups/${groupId}/leave`;
   const options = {
     method: HttpMethod.DELETE,
   };

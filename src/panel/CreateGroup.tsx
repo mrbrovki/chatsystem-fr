@@ -7,11 +7,13 @@ import { ActionType, PanelMode } from "../context/types";
 import { StyledPanelButton } from "./Panel";
 import AvatarUpload from "../components/AvatarUpload";
 import { createGroup } from "../utils/requests";
+import { StyledForm } from "../App";
 
 const StyledHeader = styled.div`
   display: flex;
   flex-flow: row nowrap;
   justify-content: space-between;
+  padding: 2rem;
 `;
 
 interface FormData {
@@ -79,14 +81,14 @@ const CreateGroup = () => {
       })
     );
     fd.append("image", formData.image || new Blob());
-    const response = await createGroup(fd);
-
-    await response.json();
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
+
+    createGroup(fd);
   };
 
   const back = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.CREATE_CHAT });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   return (
@@ -109,24 +111,26 @@ const CreateGroup = () => {
         </StyledPanelButton>
       </StyledHeader>
 
-      <AvatarUpload
-        htmlFor="create-group-image"
-        name="image"
-        id="create-group-image"
-        currentSrc={currentSrc}
-        handleChange={handleChange}
-      />
+      <StyledForm>
+        <AvatarUpload
+          htmlFor="create-group-image"
+          name="image"
+          id="create-group-image"
+          currentSrc={currentSrc}
+          handleChange={handleChange}
+        />
 
-      <InputField
-        type="text"
-        label="name"
-        name="name"
-        placeholder="Group name..."
-        id="create-group-name"
-        handleChange={handleChange}
-        autoComplete="off"
-        priority="primary"
-      />
+        <InputField
+          type="text"
+          label="name"
+          name="name"
+          placeholder="Group name..."
+          id="create-group-name"
+          handleChange={handleChange}
+          autoComplete="off"
+          priority="primary"
+        />
+      </StyledForm>
 
       <ChatList
         chats={privateChats}

@@ -1,4 +1,4 @@
-import { PanelMode, State } from "../context/types";
+import { ModalMode, PanelMode, State } from "../context/types";
 
 export enum AuthMode {
   LOGIN,
@@ -37,7 +37,11 @@ export const initState: State = {
     private: {},
     group: {},
     bot: {}
-  }
+  },
+  modal: {
+    mode: ModalMode.NONE,
+    content: ""
+  },
 };
 export const WEBSOCKET = import.meta.env.VITE_API_WEBSOCKET;
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL;

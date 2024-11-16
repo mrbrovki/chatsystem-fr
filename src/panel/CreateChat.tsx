@@ -11,6 +11,11 @@ import InputField from "../components/InputField";
 import { ActionType, ChatType, PanelMode, PrivateChat } from "../context/types";
 import { StyledControl, StyledHeader, StyledPanelButton } from "./Panel";
 import { addNewFriend, getAllUsers } from "../utils/requests";
+import styled from "styled-components";
+
+const ChatOptions = styled.div`
+  height: 4rem;
+`;
 
 const CreateChat = () => {
   const { dispatch } = useContext(Context);
@@ -43,8 +48,9 @@ const CreateChat = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };
 
-  const createGroup = () => {
+  const switchToCreateGroup = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.CREATE_GROUP });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   const back = () => {
@@ -86,7 +92,7 @@ const CreateChat = () => {
             back
           </StyledPanelButton>
           <StyledPanelButton
-            onClick={createGroup}
+            onClick={switchToCreateGroup}
             $color="#000"
             $hoverColor="#194b68"
           >
@@ -103,6 +109,7 @@ const CreateChat = () => {
           handleChange={handleChange}
           priority="secondary"
         />
+        <ChatOptions></ChatOptions>
       </StyledHeader>
 
       <ChatList

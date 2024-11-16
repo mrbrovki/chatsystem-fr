@@ -4,6 +4,7 @@ import {
   MouseEvent,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import styled from "styled-components";
@@ -11,25 +12,51 @@ import { Context } from "../context";
 import ChatList from "../chat/ChatList";
 import {
   ActionType,
+  BtnPriority,
   Chat,
   ChatType,
+  DeleteChats,
   InfoChat,
   Message,
   Messages,
+  ModalMode,
   PanelMode,
 } from "../context/types";
 import { getChatName } from "../utils/utils";
 import {
+  deleteChats,
   getBotChats,
   getGroupById,
   getPrivateChatByName,
   getPrivateChats,
 } from "../utils/requests";
-import ProfilePicture from "../components/ProfilePicture";
 import InputField from "../components/InputField";
 import OptionsToggle from "../components/OptionsToggle";
 import { StyledControl, StyledHeader } from "./Panel";
+import Button from "../components/Button";
 
+const ChatOptions = styled.div`
+  height: 4rem;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  & > div {
+    display: flex;
+    width: max-content;
+    background-color: #80808012;
+    flex-flow: row nowrap;
+    align-items: center;
+    padding: 0.5rem 1rem 0.5rem 0.5rem;
+    border-radius: 2rem;
+
+    &:hover {
+      cursor: pointer;
+      background-color: #8080802e;
+    }
+  }
+`;
 const SettingsIcon = styled.img`
   filter: invert(1);
   transition: transform 0.3s;
@@ -67,26 +94,83 @@ const StyledSearch = styled(InputField)`
   }
 `;
 
-const StyledProfile = styled(ProfilePicture)`
-  @media only screen and (min-width: ${(props) => props.theme.breakpoints.xl}) {
-    display: none;
-  }
-`;
-
 const UserChats = () => {
   const {
-    state: { privateChats, groupChats, botChats, messages, infoChats },
+    state: {
+      privateChats,
+      groupChats,
+      botChats,
+      messages,
+      infoChats,
+      currentChat,
+    },
     dispatch,
   } = useContext(Context);
   const [chats, setChats] = useState<(Chat | InfoChat)[]>([]);
   const [fileredChats, setFilteredChats] = useState<(Chat | InfoChat)[]>([]);
   const [isSelectMode, setIsSelectMode] = useState(false);
+  const [isDeleteVisible, setDeleteVisible] = useState(false);
+
+  const chatsToDelete = useRef<DeleteChats>({
+    privateChats: [],
+    groupChats: [],
+    botChats: [],
+    both: false,
+  });
+
+  const currentChatRef = useRef<EventTarget & HTMLButtonElement>();
 
   const handleChatClick = async (e: MouseEvent<HTMLButtonElement>) => {
     const name = e.currentTarget.getAttribute("data-name") as string;
     if (isSelectMode) {
-      console.log(name);
+      switch (e.currentTarget.getAttribute("data-type")) {
+        case ChatType.GROUP: {
+          const groupId = e.currentTarget.getAttribute("data-id")!;
+          const index = chatsToDelete.current.groupChats.indexOf(groupId);
+
+          if (index !== -1) {
+            chatsToDelete.current.groupChats.splice(index, 1);
+          } else {
+            chatsToDelete.current.groupChats.push(groupId);
+          }
+          break;
+        }
+        case ChatType.BOT: {
+          const index = chatsToDelete.current.botChats.indexOf(name);
+
+          if (index !== -1) {
+            chatsToDelete.current.botChats.splice(index, 1);
+          } else {
+            chatsToDelete.current.botChats.push(name);
+          }
+          break;
+        }
+        case ChatType.PRIVATE: {
+          const index = chatsToDelete.current.privateChats.indexOf(name);
+
+          if (index !== -1) {
+            chatsToDelete.current.privateChats.splice(index, 1);
+          } else {
+            chatsToDelete.current.privateChats.push(name);
+          }
+          break;
+        }
+      }
+      setDeleteVisible(
+        chatsToDelete.current.botChats.length +
+          chatsToDelete.current.groupChats.length +
+          chatsToDelete.current.privateChats.length >
+          0
+      );
     } else {
+      if (currentChatRef.current) {
+        currentChatRef.current.style.background = "white";
+        currentChatRef.current.style.color = "black";
+      }
+      currentChatRef.current = e.currentTarget;
+      currentChatRef.current.style.background = "#43a5dc";
+      currentChatRef.current.style.color = "white";
+
       switch (e.currentTarget.getAttribute("data-type")) {
         case ChatType.GROUP:
           {
@@ -186,7 +270,7 @@ const UserChats = () => {
             type: ActionType.CURRENT_CHAT,
             payload: {
               name: name,
-              image: "/user-icon.svg",
+              image: `/${name}-icon.svg`,
               type: "info",
               unreadCount: 0,
               lastReadTime: 0,
@@ -200,6 +284,7 @@ const UserChats = () => {
 
   const switchToCreateMode = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.CREATE_CHAT });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   const getLastMessageTimestamp = (chat: Chat | InfoChat) => {
@@ -285,10 +370,7 @@ const UserChats = () => {
 
   const switchToSettings = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.SETTINGS });
-  };
-
-  const switchToEdit = () => {
-    dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.EDIT_PROFILE });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -305,39 +387,140 @@ const UserChats = () => {
     });
   };
 
+  const handleDeleteChats = async () => {
+    deleteChats(chatsToDelete.current);
+
+    const newPrivateChats = privateChats.filter(
+      (item) => !chatsToDelete.current.privateChats.includes(item.username)
+    );
+    const newBotChats = botChats.filter(
+      (item) => !chatsToDelete.current.botChats.includes(item.botName)
+    );
+    const newGroupChats = groupChats.filter(
+      (item) => !chatsToDelete.current.groupChats.includes(item.id)
+    );
+    dispatch({ type: ActionType.PRIVATE_CHATS, payload: newPrivateChats });
+    dispatch({ type: ActionType.BOT_CHATS, payload: newBotChats });
+    dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
+
+    const newPrivateMessages = {
+      ...messages[ChatType.PRIVATE],
+    };
+    const newBotMessages = {
+      ...messages[ChatType.BOT],
+    };
+    const newGroupMessages = {
+      ...messages[ChatType.GROUP],
+    };
+
+    chatsToDelete.current.privateChats.forEach((username) => {
+      delete newPrivateMessages[username];
+    });
+
+    chatsToDelete.current.botChats.forEach((username) => {
+      delete newBotMessages[username];
+    });
+
+    chatsToDelete.current.groupChats.forEach((username) => {
+      delete newGroupMessages[username];
+    });
+
+    dispatch({
+      type: ActionType.MESSAGES,
+      payload: {
+        [ChatType.BOT]: newBotMessages,
+        [ChatType.GROUP]: newGroupMessages,
+        [ChatType.PRIVATE]: newPrivateMessages,
+      },
+    });
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.NONE,
+        content: "",
+      },
+    });
+
+    chatsToDelete.current.privateChats = [];
+    chatsToDelete.current.botChats = [];
+    chatsToDelete.current.groupChats = [];
+    chatsToDelete.current.both = false;
+    setDeleteVisible(false);
+    setIsSelectMode(false);
+  };
+
+  const openDeleteModal = () => {
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.DELETE,
+        content: "Do you want to delete for both?",
+        buttons: (
+          <>
+            <Button
+              type="button"
+              handleClick={undefined}
+              priority={BtnPriority.SECONDARY}
+            >
+              me
+            </Button>
+            <Button
+              type="button"
+              handleClick={handleDeleteChats}
+              priority={BtnPriority.PRIMARY}
+            >
+              yes
+            </Button>
+          </>
+        ),
+      },
+    });
+  };
+
   useEffect(() => {
     setFilteredChats(chats);
   }, [chats]);
 
   const toggleSelect = () => {
+    if (!isSelectMode) {
+      dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+    }
     setIsSelectMode((prevMode) => {
       return !prevMode;
     });
   };
+
   const optionsChildren = (
     <>
-      <img
-        src="/select-icon.svg"
-        width={32}
-        height={32}
-        onClick={toggleSelect}
-      />
-      <img src="/trash-icon.svg" width={32} height={32} onClick={undefined} />
-      <StyledProfile width={32} height={32} handleClick={switchToEdit} />
-      <SettingsIcon
-        src="/settings-icon.svg"
-        width={32}
-        height={32}
-        onClick={switchToSettings}
-      />
+      <div onClick={toggleSelect}>
+        <img src="/select-icon.svg" width={32} height={32} />
+        <span>select</span>
+      </div>
+      {isDeleteVisible && (
+        <div onClick={openDeleteModal}>
+          <img src="/trash-icon.svg" width={32} height={32} />
+          <span>remove</span>
+        </div>
+      )}
+      <div onClick={switchToSettings}>
+        <SettingsIcon src="/settings-icon.svg" width={32} height={32} />
+        <span>settings</span>
+      </div>
     </>
   );
+
+  useEffect(() => {
+    if (!currentChat && currentChatRef.current) {
+      currentChatRef.current.style.background = "white";
+      currentChatRef.current.style.color = "black";
+    }
+  }, [currentChat]);
 
   return (
     <>
       <StyledHeader>
         <StyledControl>
-          <OptionsToggle children={optionsChildren} count={2} />
+          <OptionsToggle children={optionsChildren} count={3} position="left" />
 
           <img
             src="/edit-icon.svg"
@@ -357,6 +540,21 @@ const UserChats = () => {
           handleChange={handleChange}
           priority="secondary"
         />
+
+        <ChatOptions>
+          {isSelectMode && (
+            <div onClick={toggleSelect}>
+              <img src="/select-icon.svg" width={32} height={32} />
+              <span>unselect</span>
+            </div>
+          )}
+          {isSelectMode && isDeleteVisible && (
+            <div onClick={openDeleteModal}>
+              <img src="/trash-icon.svg" width={32} height={32} />
+              <span>remove</span>
+            </div>
+          )}
+        </ChatOptions>
       </StyledHeader>
 
       {fileredChats.length !== 0 ? (

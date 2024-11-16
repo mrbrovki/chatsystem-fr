@@ -15,6 +15,7 @@ import { StyledAvatar } from "./ChatItem";
 import { Context } from "../context";
 import {
   ActionType,
+  BtnPriority,
   Chat,
   Chats,
   ChatType,
@@ -23,6 +24,7 @@ import {
   Message,
   Messages,
   MessageType,
+  ModalMode,
   PanelMode,
 } from "../context/types";
 import { Client, Message as StompMessage } from "@stomp/stompjs";
@@ -35,25 +37,25 @@ import {
   getPrivateChats,
   deletePrivateChat,
   getInfo,
+  leaveGroup,
+  deleteBotChat,
 } from "../utils/requests";
 import { sendFile } from "../utils/stompUtils";
 import OptionsToggle from "../components/OptionsToggle";
 import { WEBSOCKET } from "../constants";
 import ChatContent from "./ChatContent";
+import Button from "../components/Button";
 
 const StyledChat = styled.div<{ $isFocused: boolean; $isDrag: boolean }>`
   background-color: ${(props) => props.theme.colors.panel.background};
   height: 100%;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: stretch;
 
   & > section {
     gap: 10px;
     overflow-y: scroll;
     padding: 20px 16px 16px 16px;
     display: flex;
-    flex: 1;
+    height: calc(100% - 10rem);
     flex-flow: column nowrap;
   }
 
@@ -124,7 +126,6 @@ const StyledCurrentChat = styled.div`
   gap: 0.5rem;
 
   @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {
-    margin-left: 1rem;
     margin-right: auto;
 
     img {
@@ -137,6 +138,9 @@ type PropsType = object;
 
 const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   const stompClientRef = ref as MutableRefObject<Client>;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
   const {
     state: {
       username,
@@ -145,6 +149,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       messages,
       privateChats,
       botChats,
+      groupChats,
     },
     dispatch,
   } = useContext(Context);
@@ -256,6 +261,8 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   ) => {
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
+      if (message.senderName === username) return;
+      console.log(message);
       switch (message.type) {
         case MessageType.TEXT: {
           dispatch({
@@ -270,6 +277,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         }
       }
     } else {
+      if (messageObj.headers["sender"] === username) return;
       handleFileReceive(messageObj, ChatType.GROUP, groupId);
     }
     dispatch({
@@ -585,8 +593,8 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           },
         });
 
-        dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
         deletePrivateChat(currentChat.username, false);
+        dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
         break;
       }
       case ChatType.BOT: {
@@ -608,14 +616,13 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           },
         });
 
+        deleteBotChat(currentChat.botName);
         dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
-        deletePrivateChat(currentChat.botName, false);
         break;
       }
       case ChatType.GROUP: {
-        /*
         const newGroupChats = groupChats.filter(
-          (chat) => chat.name != currentChat.name
+          (chat) => chat.id != currentChat.id
         );
         dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
 
@@ -632,19 +639,136 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           },
         });
 
+        leaveGroup(currentChat.id);
         dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
-        deletePrivateChat(currentChat.name, false);
-        */
         break;
       }
     }
+    closeModal();
   };
 
-  const optionsChildren = (
-    <>
-      <img src="/trash-icon.svg" onClick={deleteChat} />
-    </>
-  );
+  const openDeleteModal = () => {
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.DELETE,
+        content: "Do you want to delete for both?",
+        buttons: (
+          <>
+            <Button
+              type="button"
+              handleClick={deleteChat}
+              priority={BtnPriority.SECONDARY}
+            >
+              me
+            </Button>
+            <Button
+              type="button"
+              handleClick={deleteChat}
+              priority={BtnPriority.PRIMARY}
+            >
+              both
+            </Button>
+          </>
+        ),
+      },
+    });
+  };
+
+  const openBotDeleteModal = () => {
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.CONFIRM,
+        content: "Are you sure?👾",
+        buttons: (
+          <>
+            <Button
+              type="button"
+              handleClick={closeModal}
+              priority={BtnPriority.SECONDARY}
+            >
+              nope
+            </Button>
+            <Button
+              type="button"
+              handleClick={deleteChat}
+              priority={BtnPriority.PRIMARY}
+            >
+              yes
+            </Button>
+          </>
+        ),
+      },
+    });
+  };
+
+  const openGroupLeaveModal = () => {
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.DELETE,
+        content: "Are you sure you want to leave?",
+        buttons: (
+          <>
+            <Button
+              type="button"
+              handleClick={closeModal}
+              priority={BtnPriority.SECONDARY}
+            >
+              No
+            </Button>
+            <Button
+              type="button"
+              handleClick={deleteChat}
+              priority={BtnPriority.DANGER}
+            >
+              Yes
+            </Button>
+          </>
+        ),
+      },
+    });
+  };
+
+  const closeModal = () => {
+    dispatch({
+      type: ActionType.MODAL_MODE,
+      payload: {
+        mode: ModalMode.NONE,
+        content: "",
+      },
+    });
+  };
+
+  let optionsChildren;
+
+  switch (currentChat?.type) {
+    case ChatType.PRIVATE:
+      optionsChildren = (
+        <div onClick={openDeleteModal}>
+          <img src="/trash-icon.svg" />
+          <span>remove</span>
+        </div>
+      );
+      break;
+    case ChatType.BOT:
+      optionsChildren = (
+        <div onClick={openBotDeleteModal}>
+          <img src="/trash-icon.svg" />
+          <span>remove</span>
+        </div>
+      );
+      break;
+    case ChatType.GROUP:
+      optionsChildren = (
+        <div onClick={openGroupLeaveModal}>
+          <img src="/leave-icon.svg" />
+          <span>remove</span>
+        </div>
+      );
+      break;
+  }
 
   return (
     <StyledChat
@@ -657,18 +781,22 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     >
       {currentChat && (
         <>
-          <StyledChatHeader>
+          <StyledChatHeader ref={headerRef as MutableRefObject<HTMLDivElement>}>
             <img src="/back-icon.svg" height={30} onClick={back} />
             <StyledCurrentChat>
               <StyledAvatar src={imageSrc} />
               <div>{name}</div>
             </StyledCurrentChat>
-            <OptionsToggle children={optionsChildren} count={1} />
+            <OptionsToggle
+              children={optionsChildren}
+              count={2}
+              position="right"
+            />
           </StyledChatHeader>
-          <ChatContent />
+          <ChatContent inputRef={inputRef} headerRef={headerRef} />
 
           {currentChat.type !== "info" && (
-            <MessageComposer ref={stompClientRef} />
+            <MessageComposer stompClientRef={stompClientRef} ref={inputRef} />
           )}
         </>
       )}

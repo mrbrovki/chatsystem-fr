@@ -3,15 +3,14 @@ import ChatItem from "./ChatItem";
 import { Chat, ChatType, InfoChat } from "../context/types";
 
 const StyledChatList = styled.div`
-  margin-top: 1rem;
   flex-grow: 1;
   position: relative;
   overflow-y: auto;
 `;
 
 const truncateStr = (str: string) => {
-  if (str.length > 10) {
-    return str.substring(0, 10) + "...";
+  if (str.length > 16) {
+    return str.substring(0, 16) + "...";
   }
   return str;
 };
@@ -73,9 +72,8 @@ const ChatList: React.FC<{
                 data-type={chat.type}
                 data-name={chat.name}
                 name={truncateStr(chat.name)}
-                image={chat.image || "/user-icon.svg"}
+                image={chat.image || `/${chat.name}-icon.svg`}
                 unreadCount={chat.unreadCount}
-                isSelectMode={isSelectMode}
               />
             );
         }

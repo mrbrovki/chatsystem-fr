@@ -3,16 +3,18 @@ import styled from "styled-components";
 import { Context } from "../context";
 
 const StyledProfilePicture = styled.img`
-  border-radius: 50%;
-  box-shadow: 0 0 2px #00000076;
   transition: transform 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00000042;
+  object-fit: cover;
 `;
-interface ProfilePictureProps {
+
+export interface ProfilePictureProps {
   width?: number;
   height?: number;
   handleClick: () => void;
-  className?: string;
 }
+
 const ProfilePicture = (props: ProfilePictureProps) => {
   const {
     state: { avatar },
@@ -31,7 +33,6 @@ const ProfilePicture = (props: ProfilePictureProps) => {
       width={props?.width}
       height={props?.height}
       onClick={props.handleClick}
-      className={props.className}
     />
   );
 };

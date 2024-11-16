@@ -57,7 +57,9 @@ const StyledEditProfile = styled.div`
   gap: 10px;
 
   & > img {
-    width: 80%;
+    object-fit: cover;
+    width: 5rem;
+    height: 5rem;
   }
 
   & > p {
@@ -98,10 +100,12 @@ const Sidebar: React.FC<SidebarProps> = ({ closeConnection }) => {
 
   const switchToEdit = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.EDIT_PROFILE });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   const switchToSettings = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.SETTINGS });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
   return (

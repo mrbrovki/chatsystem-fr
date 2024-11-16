@@ -57,18 +57,57 @@ const StyledDots = styled.div<{ $isChecked: boolean; $count: number }>`
     }
   }}
 `;
-const StyledIcons = styled.div<{ $isChecked: boolean }>`
+const StyledIcons = styled.div<{ $isChecked: boolean; $position: string }>`
   display: flex;
   flex-flow: row nowrap;
-  justify-content: flex-start;
-  align-items: center;
+
+  span {
+    display: none;
+  }
+  & > div {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+  }
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.xl}) {
+    width: 15rem;
+    display: block;
+    ${({ $position }) => {
+      if ($position === "left") {
+        return css`
+          left: 1.5rem;
+          top: 2rem;
+        `;
+      } else {
+        return css`
+          right: 3rem;
+          top: 3rem;
+        `;
+      }
+    }}
+    position: absolute;
+    z-index: 1000;
+    background-color: white;
+    width: 12rem;
+    box-shadow: 0 0 8px #00000042;
+
+    & > div {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      padding: 0.5rem 1rem;
+    }
+
+    span {
+      display: block;
+    }
+  }
+
   img {
     width: 32px;
     height: 32px;
   }
-  img:hover {
-    cursor: pointer;
-  }
+
   ${({ $isChecked }) => {
     if (!$isChecked) {
       return css`
@@ -77,7 +116,16 @@ const StyledIcons = styled.div<{ $isChecked: boolean }>`
     }
   }}
 `;
-
+const Overlay = styled.div`
+  @media only screen and (max-width: ${(props) => props.theme.breakpoints.xl}) {
+    position: fixed;
+    width: 100vw;
+    height: 100dvh;
+    left: 0;
+    top: 0;
+    z-index: 1;
+  }
+`;
 const StyledOptions = styled.div`
   height: 32px;
   display: flex;
@@ -97,7 +145,18 @@ const OptionsToggle = (props: any) => {
       <StyledDots onClick={toggle} $isChecked={isChecked} $count={props.count}>
         <div></div>
       </StyledDots>
-      <StyledIcons $isChecked={isChecked}>{props.children}</StyledIcons>
+      {isChecked && (
+        <>
+          <Overlay onClick={toggle} />
+          <StyledIcons
+            $isChecked={isChecked}
+            onClick={toggle}
+            $position={props.position}
+          >
+            {props.children}
+          </StyledIcons>
+        </>
+      )}
     </StyledOptions>
   );
 };

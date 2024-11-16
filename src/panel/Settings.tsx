@@ -3,9 +3,13 @@ import { useContext } from "react";
 import { Context } from "../context";
 import { deleteAccount, logout } from "../utils/requests";
 import { ActionType, BtnPriority, PanelMode } from "../context/types";
-import { StyledControl, StyledPanelButton } from "./Panel";
+import { StyledControl, StyledHeader, StyledPanelButton } from "./Panel";
 import Button from "../components/Button";
+import styled from "styled-components";
 
+const ButtonsWrapper = styled.div`
+  padding: 2rem;
+`;
 const Settings = () => {
   const { dispatch } = useContext(Context);
   const handleLogout = async () => {
@@ -23,32 +27,49 @@ const Settings = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };
 
+  const switchToEdit = () => {
+    dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.EDIT_PROFILE });
+    dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
+  };
+
   return (
     <>
-      <StyledControl>
-        <StyledPanelButton
+      <StyledHeader>
+        <StyledControl>
+          <StyledPanelButton
+            type="submit"
+            onClick={back}
+            $color="#43A5DC"
+            $hoverColor="#194b68"
+          >
+            back
+          </StyledPanelButton>
+        </StyledControl>
+      </StyledHeader>
+
+      <ButtonsWrapper>
+        <Button
           type="submit"
-          onClick={back}
-          $color="#43A5DC"
-          $hoverColor="#194b68"
+          handleClick={switchToEdit}
+          priority={BtnPriority.SECONDARY}
         >
-          back
-        </StyledPanelButton>
-      </StyledControl>
-      <Button
-        type="submit"
-        handleClick={handleLogout}
-        priority={BtnPriority.SECONDARY}
-      >
-        Logout
-      </Button>
-      <Button
-        type="submit"
-        handleClick={handleDeleteAccount}
-        priority={BtnPriority.DANGER}
-      >
-        Delete My Account
-      </Button>
+          edit profile
+        </Button>
+        <Button
+          type="submit"
+          handleClick={handleLogout}
+          priority={BtnPriority.SECONDARY}
+        >
+          logout
+        </Button>
+        <Button
+          type="submit"
+          handleClick={handleDeleteAccount}
+          priority={BtnPriority.DANGER}
+        >
+          delete my account
+        </Button>
+      </ButtonsWrapper>
     </>
   );
 };

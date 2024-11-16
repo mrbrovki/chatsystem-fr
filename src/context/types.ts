@@ -96,7 +96,7 @@ export enum PanelMode{
   USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP, SETTINGS
 }
 export enum ActionType{
-  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD, INFO_CHATS, INFO_MESSAGES
+  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD, INFO_CHATS, INFO_MESSAGES, MODAL_MODE
 }
 
 export interface State {
@@ -110,6 +110,7 @@ export interface State {
   messages: Messages;
   infoChats: InfoChat[];
   infoMessages: InfoMessages;
+  modal: ModalProps;
 }
 
 interface ADD_MESSAGE_PAYLOAD{
@@ -135,6 +136,16 @@ interface UNREAD_PAYLOAD{
   chatName: string;
 }
 
+export enum ModalMode{
+  NOTIFICATION, CONFIRM, DELETE, NONE
+}
+
+interface ModalProps{
+  mode: ModalMode,
+  content: string,
+  buttons?: any
+}
+
 export type Action =
   | { type: ActionType.USERNAME; payload: string }
   | { type: ActionType.AVATAR; payload: string }
@@ -156,8 +167,16 @@ export type Action =
   | { type: ActionType.RESET_UNREAD, payload: UNREAD_PAYLOAD} 
   | { type: ActionType.INFO_CHATS, payload: InfoChat[]}
   | { type: ActionType.INFO_MESSAGES, payload: InfoMessages}
+  | { type: ActionType.MODAL_MODE, payload: ModalProps}
   | { type: ActionType.RESET, payload: null};
 
 export enum BtnPriority{
   PRIMARY, SECONDARY, DANGER
+}
+
+export interface DeleteChats{
+  privateChats: string[],
+  groupChats: string[],
+  botChats: string[],
+  both: boolean
 }

@@ -20,17 +20,18 @@ const GlobalStyles = createGlobalStyle`
   * {
     margin: 0;
     padding: 0;
-    font-family: "Quicksand", sans-serif;
+    font-family: "Rubik", sans-serif;
+    font-family: "Dosis", sans-serif;
     font-optical-sizing: auto;
-    font-weight: 700;
+    font-weight: 600;
     font-style: normal;
-
      user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
+
   p{
     
   }
@@ -42,6 +43,7 @@ export const StyledForm = styled.form`
   width: 100%;
   max-width: 500px;
   align-self: center;
+  padding: 2rem;
 `;
 
 const App = () => {

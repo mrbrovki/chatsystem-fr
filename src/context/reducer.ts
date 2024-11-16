@@ -138,6 +138,10 @@ const reducer = (state: State, action: Action): State => {
       }
     }
     
+    case ActionType.MODAL_MODE: {
+      return {...state, modal: payload}
+    }
+
     case ActionType.RESET:{
       return initState;
     }

@@ -4,11 +4,13 @@ import OpenChat from "./OpenChat";
 import Panel from "../panel/Panel";
 import { useRef } from "react";
 import { Client } from "@stomp/stompjs";
+import Modal from "../components/Modal";
 
 const StyledMain = styled.main`
   width: 100vw;
-  height: 100svh;
-  overflow: hidden;
+  height: 100dvh;
+
+  overflow-x: hidden;
   background-color: ${(props) => props.theme.colors.main.background};
   display: flex;
   flex-flow: row nowrap;
@@ -43,6 +45,7 @@ export default function ChatApp() {
         <Sidebar closeConnection={closeConnection} />
         <Panel />
         <OpenChat ref={stompClientRef} />
+        <Modal />
       </StyledMain>
     </>
   );

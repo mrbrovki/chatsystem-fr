@@ -36,6 +36,7 @@ const StyledLogoContainer = styled.div<{ $mode: AuthMode }>`
 const StyledAuth = styled.main<{ $mode: AuthMode }>`
   background-color: grey;
   height: 100vh;
+  overflow: hidden;
   width: 100%;
   display: flex;
   flex-flow: row nowrap;
@@ -48,7 +49,6 @@ const StyledAuth = styled.main<{ $mode: AuthMode }>`
     justify-content: center;
     align-items: center;
     gap: 16px;
-    padding: 0 50px;
   }
 
   @media only screen and (max-width: ${(props) => props.theme.breakpoints.md}) {

@@ -11,12 +11,11 @@ import Settings from "./Settings";
 const StyledPanel = styled.div`
   background-color: ${(props) => props.theme.colors.panel.background};
   position: relative;
-  padding: 2rem;
   display: flex;
   flex-flow: column nowrap;
-  gap: 1rem 0;
   width: 30rem;
   height: 100%;
+  overflow: hidden;
 
   transition: width 0.3s ease-in;
   @media screen and (max-width: ${(props) => props.theme.breakpoints.xxl}) {
@@ -52,7 +51,7 @@ export const StyledPanelButton = styled.button<{
 
 export const StyledHeader = styled.header`
   position: relative;
-  height: 10rem;
+  padding: 2rem 2rem 0 2rem;
 `;
 
 export const StyledControl = styled.div`

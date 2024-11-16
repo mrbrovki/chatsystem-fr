@@ -66,143 +66,153 @@ const StyledSend = styled.div`
     display: none;
   }
 `;
-type PropsType = object;
+type PropsType = {
+  stompClientRef: MutableRefObject<Client>;
+};
 
-const MessageComposer = forwardRef<Client, PropsType>((_props, ref) => {
-  const stompClientRef = ref as MutableRefObject<Client>;
-  const {
-    state: { username, currentChat },
-    dispatch,
-  } = useContext(Context);
-  const [value, setValue] = useState("");
+const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
+  (_props, ref) => {
+    const stompClientRef = _props.stompClientRef;
+    const {
+      state: { username, currentChat },
+      dispatch,
+    } = useContext(Context);
+    const [value, setValue] = useState("");
 
-  const handleSend = async () => {
-    if (!stompClientRef || !currentChat) return;
-    let url: string;
-    const message = {
-      type: MessageType.TEXT,
-      timestamp: Date.now(),
-      content: value,
-      senderName: username,
+    const handleSend = async () => {
+      if (!stompClientRef || !currentChat) return;
+      let url: string;
+      const message = {
+        type: MessageType.TEXT,
+        timestamp: Date.now(),
+        content: value,
+        senderName: username,
+      };
+
+      switch (currentChat.type) {
+        case ChatType.BOT:
+          url = "/app/chat.sendToBot";
+          stompClientRef.current.publish({
+            destination: url,
+            body: JSON.stringify({
+              content: message.content,
+              type: message.type,
+              receiverName: currentChat.botName,
+            }),
+          });
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.BOT,
+              chatName: currentChat.botName,
+              message: message,
+            },
+          });
+          break;
+        case ChatType.GROUP:
+          url = "/app/chat.sendToGroup";
+          stompClientRef.current.publish({
+            destination: url,
+            body: JSON.stringify({
+              content: message.content,
+              type: message.type,
+              receiverName: currentChat.id,
+            }),
+          });
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.GROUP,
+              chatName: currentChat.name,
+              message: message,
+            },
+          });
+          break;
+        case ChatType.PRIVATE: {
+          url = "/app/chat.sendToPrivate";
+          stompClientRef.current.publish({
+            destination: url,
+            body: JSON.stringify({
+              content: message.content,
+              type: message.type,
+              receiverName: currentChat.username,
+            }),
+          });
+          dispatch({
+            type: ActionType.ADD_MESSAGE,
+            payload: {
+              chatType: ChatType.PRIVATE,
+              chatName: currentChat.username,
+              message: message,
+            },
+          });
+          break;
+        }
+      }
+      setValue("");
     };
 
-    switch (currentChat.type) {
-      case ChatType.BOT:
-        url = "/app/chat.sendToBot";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.botName,
-          }),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.BOT,
-            chatName: currentChat.botName,
-            message: message,
-          },
-        });
-        break;
-      case ChatType.GROUP:
-        url = "/app/chat.sendToGroup";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.name,
-          }),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.GROUP,
-            chatName: currentChat.name,
-            message: message,
-          },
-        });
-        break;
-      case ChatType.PRIVATE: {
-        url = "/app/chat.sendToPrivate";
-        stompClientRef.current.publish({
-          destination: url,
-          body: JSON.stringify({
-            content: message.content,
-            type: message.type,
-            receiverName: currentChat.username,
-          }),
-        });
-        dispatch({
-          type: ActionType.ADD_MESSAGE,
-          payload: {
-            chatType: ChatType.PRIVATE,
-            chatName: currentChat.username,
-            message: message,
-          },
-        });
-        break;
+    const onMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
+      setValue(e.target.value);
+    };
+
+    const handleKeyPress = (e: any) => {
+      if (e.key == "Enter") {
+        handleSend();
+        e.currentTarget.value = "";
       }
-    }
-    setValue("");
-  };
+    };
 
-  const onMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
-  };
+    const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
+      e.preventDefault();
+      if (!currentChat) return;
 
-  const handleKeyPress = (e: any) => {
-    if (e.key == "Enter") {
-      handleSend();
-      e.currentTarget.value = "";
-    }
-  };
+      const files = e.target.files as FileList;
+      const receiverName = getChatName(currentChat);
+      for (const file of files) {
+        sendFile(
+          file,
+          currentChat as Chat,
+          receiverName,
+          stompClientRef.current
+        );
+        saveFile(
+          dispatch,
+          file,
+          username,
+          currentChat.type as ChatType,
+          receiverName
+        );
+      }
+    };
 
-  const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    if (!currentChat) return;
-
-    const files = e.target.files as FileList;
-    const receiverName = getChatName(currentChat);
-    for (const file of files) {
-      sendFile(file, currentChat as Chat, receiverName, stompClientRef.current);
-      saveFile(
-        dispatch,
-        file,
-        username,
-        currentChat.type as ChatType,
-        receiverName
-      );
-    }
-  };
-
-  return (
-    <StyledSend>
-      <div>
-        <input
-          type="text"
-          name="message"
-          id="message"
-          placeholder="message or drag file"
-          onChange={onMessageChange}
-          onKeyDown={handleKeyPress}
-          value={value}
-        />
-        <label>
-          <input type="file" onChange={handleUpload} multiple />
-          <img src="./file-upload-icon.svg" width={28} />
-        </label>
-        <img
-          onClick={handleSend}
-          src="./send-message-icon.svg"
-          width={32}
-          height={32}
-        />
-      </div>
-    </StyledSend>
-  );
-});
+    return (
+      <StyledSend>
+        <div>
+          <input
+            type="text"
+            name="message"
+            id="message"
+            placeholder="message or drag file"
+            onChange={onMessageChange}
+            onKeyDown={handleKeyPress}
+            value={value}
+            ref={ref}
+          />
+          <label>
+            <input type="file" onChange={handleUpload} multiple />
+            <img src="./file-upload-icon.svg" width={28} />
+          </label>
+          <img
+            onClick={handleSend}
+            src="./send-message-icon.svg"
+            width={32}
+            height={32}
+          />
+        </div>
+      </StyledSend>
+    );
+  }
+);
 
 export default MessageComposer;
