@@ -1,7 +1,7 @@
 import { MouseEvent, useContext, useState } from "react";
 import styled from "styled-components";
 import { Context } from "../context";
-import { PanelMode } from "../context/types";
+import { ChatState, ChatType, MessageType, PanelMode } from "../context/types";
 
 export const StyledAvatar = styled.img`
   width: 4rem;
@@ -70,21 +70,97 @@ const Wrapper = styled.div`
   gap: 0.5rem;
 `;
 
+const LastMessage = styled.div`
+  font-size: 0.8rem;
+  span {
+    text-decoration: underline;
+  }
+`;
+
 type CheckBox = "checked" | "unchecked";
+
+const truncateStr = (str: string, len = 16) => {
+  if (str.length > len) {
+    return str.substring(0, len) + "...";
+  }
+  return str;
+};
 
 const ChatItem = (props: any) => {
   const {
-    state: { panelMode },
+    state: { panelMode, messages, username, userId },
   } = useContext(Context);
 
   const [status, setStatus] = useState<CheckBox>("unchecked");
 
-  const { name, image, handleClick, unreadCount, isSelectMode, ...restProps } =
-    props;
+  const {
+    name,
+    image,
+    handleClick,
+    unreadCount,
+    chatState,
+    isSelectMode,
+    id,
+    type,
+    ...restProps
+  } = props;
 
   const toggleSelect = (e: MouseEvent<HTMLDivElement>) => {
     handleClick(e);
     setStatus((prev) => (prev === "checked" ? "unchecked" : "checked"));
+  };
+
+  let state;
+
+  switch (chatState) {
+    case ChatState.TYPING:
+      state = "typing...";
+      break;
+    case ChatState.ONLINE:
+      state = "online";
+      break;
+    case ChatState.NONE:
+      state = "";
+      break;
+  }
+
+  const lastMessage = (chatType: ChatType) => {
+    if (
+      messages[chatType][id] != undefined &&
+      messages[chatType][id].length > 0
+    ) {
+      const message = messages[chatType][id][messages[chatType][id].length - 1];
+      let senderName;
+      if (message.senderId === userId) {
+        senderName = "You: ";
+      } else {
+        senderName = name + ": ";
+      }
+      if (message.type === MessageType.TEXT) {
+        return (
+          <LastMessage>
+            {senderName +
+              truncateStr(
+                messages[chatType][id][
+                  messages[chatType][id].length - 1
+                ].content
+                  .replace(/{{user}}/g, username)
+                  .replace(/\*.*\*/g, ""),
+                32
+              )}
+          </LastMessage>
+        );
+      } else {
+        return (
+          <LastMessage>
+            {senderName}
+            <span>Attachment</span>
+          </LastMessage>
+        );
+      }
+    } else {
+      return <></>;
+    }
   };
 
   switch (panelMode) {
@@ -95,7 +171,7 @@ const ChatItem = (props: any) => {
           <StyledChatItem {...restProps} onClick={toggleSelect}>
             <StyledAvatar src={image} />
             <Wrapper>
-              <div>{name}</div>
+              <div>{truncateStr(name)}</div>
               {unreadCount ? (
                 <StyledCounter>{unreadCount}</StyledCounter>
               ) : (
@@ -110,7 +186,11 @@ const ChatItem = (props: any) => {
           <StyledChatItem {...restProps} onClick={handleClick}>
             <StyledAvatar src={image} />
             <Wrapper>
-              <div>{name}</div>
+              <div>
+                <div>{truncateStr(name)}</div>
+                {type != "info" && lastMessage(type)}
+              </div>
+
               {unreadCount ? (
                 <StyledCounter>{unreadCount}</StyledCounter>
               ) : (
@@ -126,7 +206,7 @@ const ChatItem = (props: any) => {
         <StyledChatItem {...restProps} onClick={handleClick}>
           <StyledAvatar src={image} />
           <Wrapper>
-            <div>{name}</div>
+            <div>{truncateStr(name)}</div>
             {unreadCount ? <StyledCounter>{unreadCount}</StyledCounter> : <></>}
           </Wrapper>
         </StyledChatItem>

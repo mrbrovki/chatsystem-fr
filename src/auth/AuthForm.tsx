@@ -83,10 +83,11 @@ const AuthForm = () => {
   useEffect(() => {
     (async () => {
       const response = (await authenticate()) as AuthResponse;
-      const { username, avatar } = response;
+      const { username, avatar, userId } = response;
 
       dispatch({ type: ActionType.USERNAME, payload: username });
       dispatch({ type: ActionType.AVATAR, payload: avatar });
+      dispatch({ type: ActionType.USER_ID, payload: userId });
     })();
   }, [dispatch]);
 

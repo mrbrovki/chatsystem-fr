@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Context } from "../context";
 import { ActionType, Chat, ChatType, MessageType } from "../context/types";
-import { getChatName, saveFile } from "../utils/utils";
+import { saveFile } from "../utils/utils";
 import { Client } from "@stomp/stompjs";
 import styled from "styled-components";
 import { sendFile } from "../utils/stompUtils";
@@ -74,7 +74,7 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
   (_props, ref) => {
     const stompClientRef = _props.stompClientRef;
     const {
-      state: { username, currentChat },
+      state: { userId, currentChat },
       dispatch,
     } = useContext(Context);
     const [value, setValue] = useState("");
@@ -82,11 +82,12 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
     const handleSend = async () => {
       if (!stompClientRef || !currentChat) return;
       let url: string;
+
       const message = {
         type: MessageType.TEXT,
         timestamp: Date.now(),
         content: value,
-        senderName: username,
+        senderId: userId,
       };
 
       switch (currentChat.type) {
@@ -97,17 +98,18 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
             body: JSON.stringify({
               content: message.content,
               type: message.type,
-              receiverName: currentChat.botName,
+              receiverId: currentChat.id,
             }),
           });
           dispatch({
             type: ActionType.ADD_MESSAGE,
             payload: {
-              chatType: ChatType.BOT,
-              chatName: currentChat.botName,
+              chatType: currentChat.type,
+              chatId: currentChat.id,
               message: message,
             },
           });
+
           break;
         case ChatType.GROUP:
           url = "/app/chat.sendToGroup";
@@ -116,14 +118,14 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
             body: JSON.stringify({
               content: message.content,
               type: message.type,
-              receiverName: currentChat.id,
+              receiverId: currentChat.id,
             }),
           });
           dispatch({
             type: ActionType.ADD_MESSAGE,
             payload: {
-              chatType: ChatType.GROUP,
-              chatName: currentChat.name,
+              chatType: currentChat.type,
+              chatId: currentChat.id,
               message: message,
             },
           });
@@ -135,17 +137,20 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
             body: JSON.stringify({
               content: message.content,
               type: message.type,
-              receiverName: currentChat.username,
+              receiverId: currentChat.id,
             }),
           });
-          dispatch({
-            type: ActionType.ADD_MESSAGE,
-            payload: {
-              chatType: ChatType.PRIVATE,
-              chatName: currentChat.username,
-              message: message,
-            },
-          });
+          if (currentChat.id !== userId) {
+            dispatch({
+              type: ActionType.ADD_MESSAGE,
+              payload: {
+                chatType: currentChat.type,
+                chatId: currentChat.id,
+                message: message,
+              },
+            });
+          }
+
           break;
         }
       }
@@ -168,20 +173,15 @@ const MessageComposer = forwardRef<HTMLInputElement, PropsType>(
       if (!currentChat) return;
 
       const files = e.target.files as FileList;
-      const receiverName = getChatName(currentChat);
+      const receiverId = currentChat.id;
       for (const file of files) {
-        sendFile(
-          file,
-          currentChat as Chat,
-          receiverName,
-          stompClientRef.current
-        );
+        sendFile(file, currentChat as Chat, receiverId, stompClientRef.current);
         saveFile(
           dispatch,
           file,
-          username,
+          userId,
           currentChat.type as ChatType,
-          receiverName
+          receiverId
         );
       }
     };

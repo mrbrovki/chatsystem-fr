@@ -21,10 +21,12 @@ export interface LoginFormData {
 export interface AuthResponse{
   username: string;
   avatar: string;
+  userId: string;
 }
 
 export const initState: State = {
   username: "",
+  userId: "",
   avatar: "",
   currentChat: null,
   privateChats: [],

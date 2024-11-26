@@ -8,13 +8,6 @@ const StyledChatList = styled.div`
   overflow-y: auto;
 `;
 
-const truncateStr = (str: string) => {
-  if (str.length > 16) {
-    return str.substring(0, 16) + "...";
-  }
-  return str;
-};
-
 const ChatList: React.FC<{
   chats: (Chat | InfoChat)[];
   handleClick: any;
@@ -29,39 +22,56 @@ const ChatList: React.FC<{
               <ChatItem
                 key={chat.id}
                 handleClick={handleClick}
-                data-type={chat.type}
-                data-name={chat.id}
-                data-id={chat.id}
-                name={truncateStr(chat.name)}
+                chatState={chat.state}
+                name={chat.name}
                 image={chat.image || "/group-icon.svg"}
                 unreadCount={chat.unreadCount}
+                type={chat.type}
                 isSelectMode={isSelectMode}
+                data-state={chat.state}
+                data-type={chat.type}
+                data-name={chat.name}
+                data-id={chat.id}
+                data-image={chat.image || "/group-icon.svg"}
+                id={chat.id}
               />
             );
           case ChatType.PRIVATE:
             return (
               <ChatItem
-                key={chat.username}
+                key={chat.id}
                 handleClick={handleClick}
-                data-type={chat.type}
-                data-name={chat.username}
-                name={truncateStr(chat.username)}
+                name={chat.username}
                 image={chat.avatar || "/user-icon.svg"}
+                data-image={chat.avatar || "/user-icon.svg"}
+                type={chat.type}
                 unreadCount={chat.unreadCount}
                 isSelectMode={isSelectMode}
+                chatState={chat.state}
+                data-state={chat.state}
+                data-type={chat.type}
+                data-name={chat.username}
+                data-id={chat.id}
+                id={chat.id}
               />
             );
           case ChatType.BOT:
             return (
               <ChatItem
-                key={chat.botName}
+                key={chat.id}
                 handleClick={handleClick}
-                data-type={chat.type}
-                data-name={chat.botName}
-                name={truncateStr(chat.botName) + " 🤖"}
+                name={chat.botName}
                 image={chat.avatar || "/user-icon.svg"}
                 unreadCount={chat.unreadCount}
                 isSelectMode={isSelectMode}
+                type={chat.type}
+                chatState={chat.state}
+                data-state={chat.state}
+                data-type={chat.type}
+                data-name={chat.botName + " 🤖"}
+                data-id={chat.id}
+                data-image={chat.avatar || "/user-icon.svg"}
+                id={chat.id}
               />
             );
           case "info":
@@ -71,9 +81,15 @@ const ChatList: React.FC<{
                 handleClick={handleClick}
                 data-type={chat.type}
                 data-name={chat.name}
-                name={truncateStr(chat.name)}
+                type={"info"}
+                name={chat.name}
                 image={chat.image || `/${chat.name}-icon.svg`}
                 unreadCount={chat.unreadCount}
+                data-state={chat.state}
+                chatState={chat.state}
+                data-id={chat.name}
+                data-image={chat.image || `/${chat.name}-icon.svg`}
+                id={chat.id}
               />
             );
         }

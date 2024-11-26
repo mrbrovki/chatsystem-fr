@@ -48,9 +48,9 @@ export const StyledForm = styled.form`
 
 const App = () => {
   const {
-    state: { username },
+    state: { userId },
   } = useContext(Context);
-  const content = username ? <ChatApp /> : <AuthForm />;
+  const content = userId ? <ChatApp /> : <AuthForm />;
 
   return (
     <>

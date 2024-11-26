@@ -67,8 +67,8 @@ export const getGroupChats = async ():Promise<GroupChat[]> => {
   return response.json();
 };
 
-export const getPrivateChatByName = async (username: string):Promise<PrivateChat> => {
-  const url = `${BASE_URL}${CHATS_ROUTE}/private/${username}`;
+export const getPrivateChatById = async (id: string):Promise<PrivateChat> => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/${id}`;
   const response = await fetchRequest(url);
   return response.json();
 };
@@ -151,14 +151,14 @@ export const createGroup = async (formData: FormData) => {
   return response;
 }
 
-export const addNewFriend = async (username: string) => {
+export const addNewFriend = async (id: string) => {
   const url = `${BASE_URL}${CHATS_ROUTE}/private/add`;
   const options = {
     method: HttpMethod.POST,
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({chatName: username}),
+    body: JSON.stringify({chatId: id}),
   };
   const response = await fetchRequest(url, options);
   return response;
@@ -177,20 +177,20 @@ export const getMessages = async (): Promise<Messages> => {
   };
 
 interface FileParams{
-  chatType: ChatType; 
-  chatName: string;
-  senderName: string;
+  chatId: string;
+  senderId: string;
+  chatType: ChatType
 }
 
 export const getFileById = async (id: string, params:FileParams): Promise<Blob> => {
-  const {chatType, chatName, senderName} = params;
-  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType}&chatName=${chatName}&senderName=${senderName}`;
+  const {chatId, senderId, chatType} = params;
+  const url = `${BASE_URL}${FILES_ROUTE}/${id}?chatType=${chatType}&chatId=${chatId}&senderId=${senderId}`;
   const response = await fetchRequest(url);
   return response.blob();
 }
 
-export const updateReadStatus = async (chatType: ChatType, chatName: string) => {
-  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType == ChatType.PRIVATE? chatType: chatType + "s"}/${chatName}/status`;
+export const updateReadStatus = async (chatType: ChatType, chatId: string) => {
+  const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType == ChatType.PRIVATE? chatType: chatType + "s"}/${chatId}/status`;
   const options = {
     method: HttpMethod.PUT,
     headers: {
@@ -236,14 +236,14 @@ export const deleteAccount = async () => {
   return response;
 }
 
-export const getChatMessages = async (chatType: string, chatName: string) => {
- const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType}/${chatName}`;
+export const getChatMessages = async (chatType: string, chatId: string) => {
+ const url = `${BASE_URL}${MESSAGES_ROUTE}/${chatType == ChatType.PRIVATE? chatType: chatType + "s"}/${chatId}`;
  const response = await fetchRequest(url);
  return response.json();
 }
 
-export const deletePrivateChat = async (username: string, isForBoth: boolean) => {
-  const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?username=${username}&isBoth=${isForBoth}`;
+export const deletePrivateChat = async (id: string, isForBoth: boolean) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/private/delete?id=${id}&isBoth=${isForBoth}`;
   const options = {
     method: HttpMethod.DELETE,
   };
@@ -251,8 +251,8 @@ export const deletePrivateChat = async (username: string, isForBoth: boolean) =>
   return response;
 }
 
-export const deleteBotChat = async (botName: string) => {
-  const url = `${BASE_URL}${CHATS_ROUTE}/bots/delete?botName=${botName}`;
+export const deleteBotChat = async (id: string) => {
+  const url = `${BASE_URL}${CHATS_ROUTE}/bots/delete?id=${id}`;
   const options = {
     method: HttpMethod.DELETE,
   };

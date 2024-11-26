@@ -1,11 +1,13 @@
 import { initState } from '../constants';
-import { State, Action, ActionType, Message } from './types';
+import { State, Action, ActionType, Message, ChatType } from './types';
 
 const reducer = (state: State, action: Action): State => {
   const {type, payload} = action;
   switch (type) {
     case ActionType.USERNAME: 
       return { ...state, username: payload };
+    case ActionType.USER_ID: 
+      return {...state, userId: payload};
     case ActionType.AVATAR:
       return { ...state, avatar: payload};
     case ActionType.CURRENT_CHAT:
@@ -30,8 +32,8 @@ const reducer = (state: State, action: Action): State => {
     case ActionType.MESSAGES:
       return {...state, messages: payload};  
     case ActionType.ADD_MESSAGE:{ 
-      const {chatType, chatName, message} = payload;
-      const chatMessages = state.messages[chatType][chatName];
+      const {chatId, chatType, message} = payload;
+      const chatMessages = state.messages[chatType][chatId];
       
       let newMessages: Message[];
       if(chatMessages){
@@ -44,13 +46,13 @@ const reducer = (state: State, action: Action): State => {
             ...state.messages,
             [chatType]: {
               ...state.messages[chatType],
-              [chatName]: newMessages},
+              [chatId]: newMessages},
         }
       }
     }
     case ActionType.REPLACE_MESSAGE: {
-      const {chatType, chatName, message, index} = payload;
-      const chatMessages = state.messages[chatType][chatName];
+      const {chatId, message, chatType, index} = payload;
+      const chatMessages = state.messages[chatType][chatId];
       
       const newMessages = [...chatMessages.slice(0, index), 
         message,
@@ -61,27 +63,27 @@ const reducer = (state: State, action: Action): State => {
             ...state.messages,
             [chatType]: {
               ...state.messages[chatType],
-              [chatName]: newMessages},
+              [chatId]: newMessages},
         }
       }
     }
     case ActionType.CHAT_MESSAGES: {
-      const {chatMessages, chatType, chatName} = payload;
+      const {chatMessages, chatType, chatId} = payload;
       return {
         ...state, messages: {
           ...state.messages,
             [chatType]: {
               ...state.messages[chatType],
-              [chatName]: chatMessages
+              [chatId]: chatMessages
             }
         }
       }
     }
 
     case ActionType.ADD_PRIVATE_UNREAD:{
-      const {chatName} = payload;
+      const {chatId} = payload;
       const newPrivateChats = state.privateChats.map((chat) => {
-        if(chat.username === chatName){
+        if(chat.id === chatId){
           return {
             ...chat, unreadCount: chat.unreadCount + 1,
           }
@@ -95,9 +97,9 @@ const reducer = (state: State, action: Action): State => {
       }
     }
     case ActionType.ADD_BOT_UNREAD:{
-      const {chatName} = payload;
+      const {chatId} = payload;
       const newBotChats = state.botChats.map((chat) => {
-        if(chat.botName === chatName){
+        if(chat.id === chatId){
           return {
             ...chat, unreadCount: chat.unreadCount + 1,
           }
@@ -105,15 +107,15 @@ const reducer = (state: State, action: Action): State => {
           return chat;
         }
       })
-
+ 
       return {
         ...state, botChats: newBotChats
       }
     }
     case ActionType.ADD_GROUP_UNREAD:{
-      const {chatName} = payload;
+      const {chatId} = payload;
       const newGroupChats = state.groupChats.map((chat) => {
-        if(chat.name === chatName){
+        if(chat.id === chatId){
           return {
             ...chat, unreadCount: chat.unreadCount + 1,
           }
@@ -125,6 +127,90 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state, groupChats: newGroupChats
       }
+    }
+
+    case ActionType.CHAT_STATE:{
+      const {chatType, chatId, chatState} = payload;
+
+      switch(chatType){
+        case ChatType.PRIVATE: {
+          const newPrivateChats = state.privateChats.map((chat) => {
+            if(chat.id === chatId){
+              return {
+                ...chat, state: chatState,
+              }
+            }else{
+              return chat;
+            }
+          })
+          if(state.currentChat != null){
+            if(state.currentChat.type === ChatType.PRIVATE){
+              if(state.currentChat.id === chatId){
+                return{
+                  ...state, privateChats: newPrivateChats, currentChat: {
+                    ...state.currentChat, state: chatState
+                  }
+                }
+              }
+            }
+          }
+          return {
+            ...state, privateChats: newPrivateChats
+          }
+        }
+        case ChatType.GROUP: {
+          const newGroupChats = state.groupChats.map((chat) => {
+            if(chat.id === chatId){
+              return {
+                ...chat, state: chatState,
+              }
+            }else{
+              return chat;
+            }
+          })
+
+          if(state.currentChat != null){
+            if(state.currentChat.type === ChatType.GROUP){
+              if(state.currentChat.id === chatId){
+                return{
+                  ...state, groupChats: newGroupChats, currentChat: {
+                    ...state.currentChat, state: chatState
+                  }
+                }
+              }
+            }
+          }
+          return {
+            ...state, groupChats: newGroupChats
+          }
+        }
+        case ChatType.BOT: {
+           const newBotChats = state.botChats.map((chat) => {
+            if(chat.id === chatId){
+              return {
+                ...chat, state: chatState,
+              }
+            }else{
+              return chat;
+            }
+          })
+          if(state.currentChat != null){
+            if(state.currentChat.type === ChatType.BOT){
+              if(state.currentChat.id === chatId){
+                return{
+                  ...state, botChats: newBotChats, currentChat: {
+                    ...state.currentChat, state: chatState
+                  }
+                }
+              }
+            }
+          }
+          return {
+            ...state, botChats: newBotChats
+          }
+        }
+      }
+      break; 
     }
 
     case ActionType.INFO_CHATS: {

@@ -1,6 +1,7 @@
 export enum MessageType {
   JOIN = "join",
   LEAVE = "leave",
+  STATE = "state",
   SVG = "image/svg+xml",
   IMAGE_JPEG = "image/jpeg",
   IMAGE_PNG = "image/png",
@@ -18,19 +19,28 @@ export enum ChatType{
   PRIVATE="private", GROUP="group", BOT="bot"
 }
 
+export enum ChatState{
+  TYPING="TYPING", NONE="NONE", ONLINE="ONLINE"
+}
+
 export interface InfoChat{
   name: string;
   image: string;
   type: "info";
   unreadCount: number;
   lastReadTime: number;
+  state: ChatState;
+  id: string;
 }
+
 export interface PrivateChat{
   username: string;
   avatar: string;
   type: ChatType.PRIVATE;
   unreadCount: number;
   lastReadTime: number;
+  state: ChatState;
+  id: string;
 }
 
 export interface BotChat{
@@ -39,6 +49,8 @@ export interface BotChat{
   type: ChatType.BOT; 
   unreadCount: number;
   lastReadTime: number;
+  state: ChatState;
+  id: string;
 }
 
 export interface GroupChat{
@@ -50,13 +62,14 @@ export interface GroupChat{
   host?: string;
   unreadCount: number;
   lastReadTime: number;
+  state: ChatState;
 }
 
 export interface Message{
   type: MessageType;
   content: string;
   timestamp: number;
-  senderName: string;
+  senderId: string;
   link?: string;
 } 
 
@@ -71,14 +84,13 @@ export interface Messages{
     [id: string]: Message[]
   }
 }
-
 export interface InfoMessages{
   [id: string]: InfoMessage[]
 }
 
 export interface InfoMessage{
   content: string;
-  senderName: string;
+  senderId: string;
   type: MessageType;
   timestamp?: number;
   link: string;
@@ -96,11 +108,12 @@ export enum PanelMode{
   USER_CHATS, CREATE_CHAT, EDIT_PROFILE, CREATE_GROUP, SETTINGS
 }
 export enum ActionType{
-  USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD, INFO_CHATS, INFO_MESSAGES, MODAL_MODE
+  USER_ID, USERNAME, AVATAR, CURRENT_CHAT, PRIVATE_CHATS, ADD_PRIVATE_CHAT, GROUP_CHATS, ADD_GROUP_CHAT, BOT_CHATS, ADD_BOT_CHAT, PANEL_MODE, RESET, MESSAGES, ADD_MESSAGE, REPLACE_MESSAGE, CHAT_MESSAGES, ADD_PRIVATE_UNREAD, ADD_BOT_UNREAD, ADD_GROUP_UNREAD, RESET_UNREAD, INFO_CHATS, INFO_MESSAGES, MODAL_MODE, CHAT_STATE
 }
 
 export interface State {
   username: string;
+  userId: string;
   avatar: string,
   currentChat: Chat | InfoChat |null;
   privateChats: PrivateChat[];
@@ -114,26 +127,26 @@ export interface State {
 }
 
 interface ADD_MESSAGE_PAYLOAD{
-  chatName: string;
   chatType: ChatType;
+  chatId: string;
   message: Message;
 }
 
 interface REPLACE_MESSAGE_PAYLOAD{
-  chatName: string;
-  chatType: ChatType;
+  chatType: ChatType,
+  chatId: string
   index: number;
   message: Message;
 }
 
 interface REPLACE_CHAT_MESSAGES{
-  chatMessages: Message[];
-  chatName: string;
   chatType: ChatType;
+  chatMessages: Message[];
+  chatId: string;
 }
 
 interface UNREAD_PAYLOAD{
-  chatName: string;
+  chatId: string;
 }
 
 export enum ModalMode{
@@ -148,6 +161,7 @@ interface ModalProps{
 
 export type Action =
   | { type: ActionType.USERNAME; payload: string }
+  | { type: ActionType.USER_ID, payload: string }
   | { type: ActionType.AVATAR; payload: string }
   | { type: ActionType.CURRENT_CHAT; payload: Chat | InfoChat |null }
   | { type: ActionType.PRIVATE_CHATS; payload: PrivateChat[] }
@@ -168,6 +182,7 @@ export type Action =
   | { type: ActionType.INFO_CHATS, payload: InfoChat[]}
   | { type: ActionType.INFO_MESSAGES, payload: InfoMessages}
   | { type: ActionType.MODAL_MODE, payload: ModalProps}
+  | { type: ActionType.CHAT_STATE, payload: {chatId: string, chatType: ChatType, chatState: ChatState}}
   | { type: ActionType.RESET, payload: null};
 
 export enum BtnPriority{

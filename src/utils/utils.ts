@@ -18,22 +18,22 @@ export const getChatName = (chat: Chat | InfoChat) => {
 export const saveFile = (
     dispatch: React.Dispatch<Action>, 
     data: Blob | File,
-    senderName: string,
+    senderId: string,
     chatType: ChatType,
-    chatName: string
+    chatId: string
   ) => {
     const objectURL = URL.createObjectURL(data);
     const message = {
       timestamp: Date.now(),
       content: objectURL,
       type: data.type as MessageType,
-      senderName: senderName,
+      senderId,
     };
     dispatch({
       type: ActionType.ADD_MESSAGE,
       payload: {
         chatType: chatType,
-        chatName: chatName,
+        chatId: chatId,
         message: message,
       },
     });
@@ -42,4 +42,8 @@ export const saveFile = (
 
 export const padZero = (num:number) => {
     return num < 10 ? '0' + num : num;
+}
+
+export const isMobile = () => {
+  return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
 }

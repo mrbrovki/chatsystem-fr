@@ -1,7 +1,7 @@
 import { Client } from "@stomp/stompjs";
 import { Chat, ChatType } from "../context/types";
 
-export const sendFile = async (file: File, chat: Chat, receiverName: string, stompClient: Client | null) => {
+export const sendFile = async (file: File, chat: Chat, receiverId: string, stompClient: Client | null) => {
   const buffer = new Uint8Array(await file.arrayBuffer());
   let url;
   switch (chat.type) {
@@ -22,7 +22,7 @@ export const sendFile = async (file: File, chat: Chat, receiverName: string, sto
     binaryBody: buffer,
     headers: {
       "file-type": file.type,
-      "receiver-name": receiverName!,
+      "receiver": receiverId!,
       "content-type": "application/octet-stream",
     },
   });

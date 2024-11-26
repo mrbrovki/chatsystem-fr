@@ -79,9 +79,6 @@ const ChatContent: React.FC<{
   inputRef: RefObject<HTMLInputElement>;
   headerRef: RefObject<HTMLElement>;
 }> = ({ inputRef, headerRef }) => {
-  console.log(inputRef);
-  console.log(headerRef);
-
   const {
     state: {
       currentChat,
@@ -91,21 +88,16 @@ const ChatContent: React.FC<{
       groupChats,
       infoMessages,
       username,
+      userId,
     },
     dispatch,
   } = useContext(Context);
   const [content, setContent] = useState<any>([]);
   const scrollRef = useRef<HTMLElement>(null);
-  //console.log(inputRef);
-  //console.log(headerRef);
-  const updateReadCount = (
-    chats: Chat[],
-    prop: string,
-    name: string,
-    unreadCount: number
-  ) => {
+
+  const updateReadCount = (chats: Chat[], id: string, unreadCount: number) => {
     return chats.map((chat: any) => {
-      if (chat[prop] === name) {
+      if (chat.id === id) {
         return {
           ...chat,
           lastReadTime: Date.now(),
@@ -122,45 +114,36 @@ const ChatContent: React.FC<{
 
     switch (currentChat.type) {
       case ChatType.PRIVATE: {
-        chatMessages = messages[currentChat.type][
-          currentChat.username
-        ] as Message[];
+        chatMessages = messages[currentChat.type][currentChat.id] as Message[];
         dispatch({
           type: ActionType.PRIVATE_CHATS,
-          payload: updateReadCount(
-            privateChats,
-            "username",
-            currentChat.username,
-            0
-          ),
+          payload: updateReadCount(privateChats, currentChat.id, 0),
         });
-        updateReadStatus(currentChat.type, currentChat.username);
+        updateReadStatus(currentChat.type, currentChat.id);
         break;
       }
       case ChatType.GROUP: {
         chatMessages = messages[currentChat.type][currentChat.id] as Message[];
         dispatch({
           type: ActionType.GROUP_CHATS,
-          payload: updateReadCount(groupChats, "id", currentChat.id, 0),
+          payload: updateReadCount(groupChats, currentChat.id, 0),
         });
 
         updateReadStatus(currentChat.type, currentChat.id);
         break;
       }
       case ChatType.BOT: {
-        chatMessages = messages[currentChat.type][
-          currentChat.botName
-        ] as Message[];
+        chatMessages = messages[currentChat.type][currentChat.id] as Message[];
         dispatch({
           type: ActionType.BOT_CHATS,
-          payload: updateReadCount(botChats, "botName", currentChat.botName, 0),
+          payload: updateReadCount(botChats, currentChat.botName, 0),
         });
 
-        updateReadStatus(currentChat.type, currentChat.botName);
+        updateReadStatus(currentChat.type, currentChat.id);
         break;
       }
       case "info": {
-        chatMessages = infoMessages[currentChat.name] as InfoMessage[];
+        chatMessages = infoMessages[currentChat.id] as InfoMessage[];
       }
     }
 
@@ -171,19 +154,25 @@ const ChatContent: React.FC<{
         ? chatMessage.timestamp
         : Date.now();
       const date = new Date(timestamp);
-      const senderName = chatMessage.senderName;
-      const isSender = !senderName || senderName === username;
-      console.log(chatMessage.type);
+      const senderId = chatMessage.senderId;
+      const isSender = !senderId || senderId === userId;
+
       switch (chatMessage.type) {
         case MessageType.TEXT: {
+          let messageContent: string = chatMessage.content;
+          if (currentChat.type === ChatType.BOT) {
+            messageContent = messageContent.replace(/{{user}}/g, username);
+            messageContent = messageContent.replace(/\*.*\*/g, "");
+          }
+
           return (
             <StyledMessage
-              key={senderName + timestamp + index}
+              key={senderId + timestamp + index}
               $isText={true}
               $isSender={isSender}
             >
               <div className="content">
-                {parseMessageContent(chatMessage.content)}
+                {parseMessageContent(messageContent)}
               </div>
               <span>
                 {padZero(date.getHours()) + ":" + padZero(date.getMinutes())}
@@ -194,9 +183,10 @@ const ChatContent: React.FC<{
         case MessageType.IMAGE_GIF:
         case MessageType.IMAGE_JPEG:
         case MessageType.IMAGE_PNG: {
+          console.log(chatMessage);
           return (
             <StyledMessage
-              key={senderName + timestamp + index}
+              key={senderId + timestamp + index}
               $isSender={isSender}
               $isText={false}
             >
@@ -214,7 +204,7 @@ const ChatContent: React.FC<{
         case MessageType.APPLICATION_PDF: {
           return (
             <StyledMessage
-              key={senderName + timestamp + index}
+              key={senderId + timestamp + index}
               $isSender={isSender}
               $isText={false}
             >
@@ -235,7 +225,7 @@ const ChatContent: React.FC<{
         case MessageType.VIDEO_MP4:
           return (
             <StyledMessage
-              key={senderName + chatMessage.timestamp}
+              key={senderId + chatMessage.timestamp}
               $isSender={isSender}
               $isText={false}
             >
@@ -253,7 +243,7 @@ const ChatContent: React.FC<{
           if (currentChat.type === "info") {
             return (
               <StyledMessage
-                key={senderName + timestamp + index}
+                key={senderId + timestamp + index}
                 $isSender={isSender}
                 $isText={false}
               >
@@ -270,7 +260,7 @@ const ChatContent: React.FC<{
           } else {
             return (
               <StyledMessage
-                key={senderName + timestamp + index}
+                key={senderId + timestamp + index}
                 $isSender={isSender}
                 $isText={false}
               >
@@ -289,7 +279,7 @@ const ChatContent: React.FC<{
       }
     });
     setContent(chatContent);
-  }, [currentChat, messages, username]);
+  }, [currentChat, messages, userId]);
 
   const parseMessageContent = (content: string): any => {
     const regex = /https:\/\/[^\s"']+|[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}/g;
@@ -317,6 +307,7 @@ const ChatContent: React.FC<{
       return acc;
     }, []);
   };
+
   return (
     <>
       <section ref={scrollRef}>{content}</section>

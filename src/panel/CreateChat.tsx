@@ -8,7 +8,13 @@ import {
 import { Context } from "../context";
 import ChatList from "../chat/ChatList";
 import InputField from "../components/InputField";
-import { ActionType, ChatType, PanelMode, PrivateChat } from "../context/types";
+import {
+  ActionType,
+  ChatState,
+  ChatType,
+  PanelMode,
+  PrivateChat,
+} from "../context/types";
 import { StyledControl, StyledHeader, StyledPanelButton } from "./Panel";
 import { addNewFriend, getAllUsers } from "../utils/requests";
 import styled from "styled-components";
@@ -23,14 +29,20 @@ const CreateChat = () => {
   const [filteredUsers, setFilteredUsers] = useState<PrivateChat[]>([]);
 
   const handleAddNewFriend = async (e: MouseEvent<HTMLButtonElement>) => {
+    const newFriendId = e.currentTarget.getAttribute("data-id") as string;
     const newFriendName = e.currentTarget.getAttribute("data-name") as string;
+
     const avatar = (
       e.currentTarget.firstChild as HTMLInputElement
     ).getAttribute("src") as string;
-    await addNewFriend(newFriendName);
+    await addNewFriend(newFriendId);
 
     const newPrivateChat = {
       username: newFriendName,
+      id: newFriendId,
+      state: ChatState.NONE,
+      unreadCount: 0,
+      lastReadTime: 0,
       avatar: avatar,
       type: ChatType.PRIVATE,
     } as PrivateChat;
@@ -40,10 +52,10 @@ const CreateChat = () => {
       type: ActionType.CHAT_MESSAGES,
       payload: {
         chatMessages: [],
-        chatType: ChatType.PRIVATE,
-        chatName: newFriendName,
+        chatId: newFriendId,
       },
     });
+
     dispatch({ type: ActionType.CURRENT_CHAT, payload: newPrivateChat });
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.USER_CHATS });
   };

@@ -49,10 +49,11 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = (await login(formData)) as AuthResponse;
-    const { username, avatar } = response;
+    const { username, avatar, userId } = response;
 
     dispatch({ type: ActionType.USERNAME, payload: username });
-    console.log(document.cookie);
+    dispatch({ type: ActionType.USER_ID, payload: userId });
+
     if (avatar) {
       dispatch({
         type: ActionType.AVATAR,
@@ -77,9 +78,10 @@ export default function Login({ setMode, cachedUsername }: LoginProps) {
   const handleDemoLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const response = (await demoLogin()) as AuthResponse;
-    const { username, avatar } = response;
+    const { username, avatar, userId } = response;
 
     dispatch({ type: ActionType.USERNAME, payload: username });
+    dispatch({ type: ActionType.USER_ID, payload: userId });
     if (avatar) {
       dispatch({
         type: ActionType.AVATAR,

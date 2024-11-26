@@ -18,6 +18,7 @@ import {
   BtnPriority,
   Chat,
   Chats,
+  ChatState,
   ChatType,
   InfoChat,
   InfoMessages,
@@ -119,6 +120,11 @@ const StyledChatHeader = styled.div`
   }
 `;
 
+const StyledState = styled.div`
+  color: #434343;
+  font-weight: 400;
+`;
+
 const StyledCurrentChat = styled.div`
   display: flex;
   flex-flow: row nowrap;
@@ -143,6 +149,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
 
   const {
     state: {
+      userId,
       username,
       currentChat,
       panelMode,
@@ -157,7 +164,6 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   const [imageSrc, setImageSrc] = useState("/user-icon.svg");
   const [name, setName] = useState("");
   const [isDrag, setIsDrag] = useState(false);
-
   const messagesRef = useRef<Messages>(messages);
 
   const connectToWebsocket = (chats: Chats) => {
@@ -168,7 +174,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         console.log("attempting connect!");
         //  subscribe to private channel
         stompClient.subscribe(
-          "/user/" + username + "/private/messages",
+          "/user/" + userId + "/private/messages",
           (messageObj) =>
             onPrivateMessageReceived(
               stompClient,
@@ -179,7 +185,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
 
         //  subscribe to bot channel
         stompClient.subscribe(
-          "/user/" + username + "/bot/messages",
+          "/user/" + userId + "/bot/messages",
           (messageObj) =>
             onBotMessageReceived(stompClient, messageObj, messagesRef.current)
         );
@@ -240,16 +246,39 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
             type: ActionType.ADD_MESSAGE,
             payload: {
               chatType: ChatType.BOT,
-              chatName: message.senderName,
+              chatId: message.senderId,
               message: message,
             },
           });
+          dispatch({
+            type: ActionType.CHAT_STATE,
+            payload: {
+              chatType: ChatType.BOT,
+              chatId: message.senderId,
+              chatState: ChatState.ONLINE,
+            },
+          });
+          dispatch({
+            type: ActionType.ADD_BOT_UNREAD,
+            payload: { chatId: message.senderId },
+          });
           break;
+        case MessageType.STATE: {
+          switch (message.content) {
+            case ChatState.TYPING: {
+              dispatch({
+                type: ActionType.CHAT_STATE,
+                payload: {
+                  chatType: ChatType.BOT,
+                  chatId: message.senderId,
+                  chatState: ChatState.TYPING,
+                },
+              });
+              break;
+            }
+          }
+        }
       }
-      dispatch({
-        type: ActionType.ADD_BOT_UNREAD,
-        payload: { chatName: message.senderName },
-      });
     }
   };
 
@@ -261,15 +290,14 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
   ) => {
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
-      if (message.senderName === username) return;
-      console.log(message);
+      if (message.senderId === username) return;
       switch (message.type) {
         case MessageType.TEXT: {
           dispatch({
             type: ActionType.ADD_MESSAGE,
             payload: {
               chatType: ChatType.GROUP,
-              chatName: groupId,
+              chatId: groupId,
               message: message,
             },
           });
@@ -282,7 +310,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     }
     dispatch({
       type: ActionType.ADD_GROUP_UNREAD,
-      payload: { chatName: groupId },
+      payload: { chatId: groupId },
     });
   };
 
@@ -291,7 +319,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     messageObj: StompMessage,
     messages: Messages
   ) => {
-    let senderName;
+    let senderId;
     if (messageObj.headers["content-type"] === MessageType.APPLICATION_JSON) {
       const message = JSON.parse(messageObj.body) as Message;
       switch (message.type) {
@@ -305,16 +333,16 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           dispatch({
             type: ActionType.ADD_MESSAGE,
             payload: {
-              chatType: ChatType.BOT,
-              chatName: groupChat.id,
+              chatType: ChatType.PRIVATE,
+              chatId: groupChat.id,
               message: message,
             },
           });
           break;
         }
         case MessageType.TEXT: {
-          senderName = message.senderName;
-          if (!messages[ChatType.PRIVATE][message.senderName]) {
+          senderId = message.senderId;
+          if (!messages[ChatType.PRIVATE][message.senderId]) {
             const newChats = await getPrivateChats();
             dispatch({ type: ActionType.PRIVATE_CHATS, payload: newChats });
           }
@@ -323,44 +351,44 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
             type: ActionType.ADD_MESSAGE,
             payload: {
               chatType: ChatType.PRIVATE,
-              chatName: message.senderName,
+              chatId: message.senderId,
               message: message,
             },
           });
 
           dispatch({
             type: ActionType.ADD_PRIVATE_UNREAD,
-            payload: { chatName: senderName },
+            payload: { chatId: senderId },
           });
           break;
         }
       }
     } else {
-      senderName = messageObj.headers["sender"];
-      if (!messages[ChatType.PRIVATE][senderName]) {
+      senderId = messageObj.headers["sender"];
+      if (!messages[ChatType.PRIVATE][senderId]) {
         const newChats = await getPrivateChats();
         dispatch({ type: ActionType.PRIVATE_CHATS, payload: newChats });
       }
 
       dispatch({
         type: ActionType.ADD_PRIVATE_UNREAD,
-        payload: { chatName: senderName },
+        payload: { chatId: senderId },
       });
 
-      handleFileReceive(messageObj, ChatType.PRIVATE);
+      handleFileReceive(messageObj, ChatType.PRIVATE, senderId);
     }
   };
 
   const handleFileReceive = (
     messageObj: StompMessage,
     chatType: ChatType,
-    chatName?: string
+    chatId: string
   ) => {
     const blob = new Blob([messageObj.binaryBody], {
       type: messageObj.headers["contentType"],
     });
-    const senderName = messageObj.headers["sender"];
-    saveFile(dispatch, blob, senderName, chatType, chatName || senderName);
+    const senderId = messageObj.headers["sender"];
+    saveFile(dispatch, blob, senderId, chatType, chatId || senderId);
   };
 
   const loadMessages = async () => {
@@ -381,9 +409,9 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
               return message;
             } else {
               const params = {
-                chatName: id,
+                chatId: id,
                 chatType: chatType,
-                senderName: message.senderName,
+                senderId: message.senderId,
               };
               const blob = await getFileById(message.content, params);
               const url = URL.createObjectURL(blob);
@@ -396,8 +424,8 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         dispatch({
           type: ActionType.CHAT_MESSAGES,
           payload: {
-            chatName: id,
             chatType: chatType,
+            chatId: id,
             chatMessages: newChatMessages,
           },
         });
@@ -424,14 +452,14 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     if (!currentChat) return;
     [...e.dataTransfer.files].forEach(async (file, i) => {
       console.log(`… file[${i}].name = ${file.name}`);
-      const receiverName = getChatName(currentChat);
-      sendFile(file, currentChat as Chat, receiverName, stompClientRef.current);
+      const receiverId = currentChat.id;
+      sendFile(file, currentChat as Chat, receiverId, stompClientRef.current);
       saveFile(
         dispatch,
         file,
-        username,
+        userId,
         currentChat.type as ChatType,
-        receiverName
+        receiverId
       );
     });
   };
@@ -484,7 +512,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     if (stompClientRef.current) {
       //  subscribe to private channel
       stompClientRef.current.subscribe(
-        "/user/" + username + "/private/messages",
+        "/user/" + userId + "/private/messages",
         (messageObj) =>
           onPrivateMessageReceived(
             stompClientRef.current,
@@ -495,7 +523,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
 
       //  subscribe to bot channel
       stompClientRef.current.subscribe(
-        "/user/" + username + "/bot/messages",
+        "/user/" + userId + "/bot/messages",
         (messageObj) =>
           onBotMessageReceived(
             stompClientRef.current,
@@ -509,10 +537,10 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       if (stompClientRef.current) {
         if (stompClientRef.current.active) {
           stompClientRef.current.unsubscribe(
-            "/user/" + username + "/private/messages"
+            "/user/" + userId + "/private/messages"
           );
           stompClientRef.current.unsubscribe(
-            "/user/" + username + "/bot/messages"
+            "/user/" + userId + "/bot/messages"
           );
         }
       }
@@ -525,9 +553,6 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           const chatMessages = messagesRef.current[chatType][id];
           const newChatMessages = chatMessages.map((message: Message) => {
             const newMessage = { ...message } as Message;
-            if (newMessage.senderName === username) {
-              newMessage.senderName = "";
-            }
             return newMessage;
           });
           newMessages[chatType][id] = newChatMessages;
@@ -538,7 +563,7 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         payload: newMessages as Messages,
       });
     };
-  }, [username]);
+  }, [userId]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -571,52 +596,42 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
   };
 
-  const deleteChat = async () => {
+  const deleteChat = async (isBoth?: boolean) => {
     if (!currentChat) return;
     switch (currentChat.type) {
       case ChatType.PRIVATE: {
         const newPrivateChats = privateChats.filter(
-          (chat) => chat.username != currentChat.username
+          (chat) => chat.id != currentChat.id
         );
         dispatch({ type: ActionType.PRIVATE_CHATS, payload: newPrivateChats });
-
-        const newPrivateMessages = {
-          ...messages[ChatType.PRIVATE],
-        };
-        delete newPrivateMessages[currentChat.username];
 
         dispatch({
           type: ActionType.MESSAGES,
           payload: {
             ...messages,
-            [ChatType.PRIVATE]: newPrivateMessages,
+            [currentChat.id]: [],
           },
         });
 
-        deletePrivateChat(currentChat.username, false);
+        deletePrivateChat(currentChat.id, isBoth!);
         dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
         break;
       }
       case ChatType.BOT: {
         const newBotChats = botChats.filter(
-          (chat) => chat.botName != currentChat.botName
+          (chat) => chat.id != currentChat.id
         );
         dispatch({ type: ActionType.BOT_CHATS, payload: newBotChats });
-
-        const newBotMessages = {
-          ...messages[ChatType.BOT],
-        };
-        delete newBotMessages[currentChat.botName];
 
         dispatch({
           type: ActionType.MESSAGES,
           payload: {
             ...messages,
-            [ChatType.BOT]: newBotMessages,
+            [currentChat.id]: [],
           },
         });
 
-        deleteBotChat(currentChat.botName);
+        deleteBotChat(currentChat.id);
         dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
         break;
       }
@@ -626,16 +641,11 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
         );
         dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
 
-        const newGroupMessages = {
-          ...messages[ChatType.GROUP],
-        };
-        delete newGroupMessages[currentChat.name];
-
         dispatch({
           type: ActionType.MESSAGES,
           payload: {
             ...messages,
-            [ChatType.GROUP]: newGroupMessages,
+            [currentChat.id]: [],
           },
         });
 
@@ -657,14 +667,14 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
           <>
             <Button
               type="button"
-              handleClick={deleteChat}
+              handleClick={() => deleteChat(false)}
               priority={BtnPriority.SECONDARY}
             >
               me
             </Button>
             <Button
               type="button"
-              handleClick={deleteChat}
+              handleClick={() => deleteChat(true)}
               priority={BtnPriority.PRIMARY}
             >
               both
@@ -770,6 +780,20 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
       break;
   }
 
+  let state;
+
+  switch (currentChat?.state) {
+    case ChatState.TYPING:
+      state = "typing...";
+      break;
+    case ChatState.ONLINE:
+      state = "online";
+      break;
+    case ChatState.NONE:
+      state = "";
+      break;
+  }
+
   return (
     <StyledChat
       onDragOver={dragover}
@@ -785,7 +809,10 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
             <img src="/back-icon.svg" height={30} onClick={back} />
             <StyledCurrentChat>
               <StyledAvatar src={imageSrc} />
-              <div>{name}</div>
+              <div>
+                <div>{name}</div>
+                <StyledState>{state}</StyledState>
+              </div>
             </StyledCurrentChat>
             <OptionsToggle
               children={optionsChildren}
@@ -803,4 +830,5 @@ const OpenChat = forwardRef<Client, PropsType>((_props, ref) => {
     </StyledChat>
   );
 });
+
 export default OpenChat;

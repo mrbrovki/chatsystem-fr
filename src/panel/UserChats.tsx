@@ -14,6 +14,7 @@ import {
   ActionType,
   BtnPriority,
   Chat,
+  ChatState,
   ChatType,
   DeleteChats,
   InfoChat,
@@ -23,13 +24,7 @@ import {
   PanelMode,
 } from "../context/types";
 import { getChatName } from "../utils/utils";
-import {
-  deleteChats,
-  getBotChats,
-  getGroupById,
-  getPrivateChatByName,
-  getPrivateChats,
-} from "../utils/requests";
+import { deleteChats, getGroupById } from "../utils/requests";
 import InputField from "../components/InputField";
 import OptionsToggle from "../components/OptionsToggle";
 import { StyledControl, StyledHeader } from "./Panel";
@@ -121,7 +116,10 @@ const UserChats = () => {
   const currentChatRef = useRef<EventTarget & HTMLButtonElement>();
 
   const handleChatClick = async (e: MouseEvent<HTMLButtonElement>) => {
+    const id = e.currentTarget.getAttribute("data-id") as string;
     const name = e.currentTarget.getAttribute("data-name") as string;
+    const image = e.currentTarget.getAttribute("data-image") as string;
+
     if (isSelectMode) {
       switch (e.currentTarget.getAttribute("data-type")) {
         case ChatType.GROUP: {
@@ -136,7 +134,7 @@ const UserChats = () => {
           break;
         }
         case ChatType.BOT: {
-          const index = chatsToDelete.current.botChats.indexOf(name);
+          const index = chatsToDelete.current.botChats.indexOf(id);
 
           if (index !== -1) {
             chatsToDelete.current.botChats.splice(index, 1);
@@ -146,7 +144,7 @@ const UserChats = () => {
           break;
         }
         case ChatType.PRIVATE: {
-          const index = chatsToDelete.current.privateChats.indexOf(name);
+          const index = chatsToDelete.current.privateChats.indexOf(id);
 
           if (index !== -1) {
             chatsToDelete.current.privateChats.splice(index, 1);
@@ -174,6 +172,13 @@ const UserChats = () => {
       switch (e.currentTarget.getAttribute("data-type")) {
         case ChatType.GROUP:
           {
+            const state =
+              ChatState[
+                e.currentTarget.getAttribute(
+                  "data-state"
+                )! as keyof typeof ChatState
+              ];
+
             const groupId = e.currentTarget.getAttribute("data-id")!;
             const newGroupChat = await getGroupById(groupId);
             const newGroupChats = groupChats.map((groupChat) => {
@@ -190,82 +195,87 @@ const UserChats = () => {
               payload: {
                 id: newGroupChat.id,
                 name: newGroupChat.name,
-                image: newGroupChat.image || "/group-icon.svg",
+                image: image,
                 type: ChatType.GROUP,
                 unreadCount: 0,
                 lastReadTime: 0,
+                state,
               },
             });
           }
           break;
         case ChatType.PRIVATE: {
-          let newPrivateChat;
-          try {
-            newPrivateChat = await getPrivateChatByName(name);
-          } catch {
-            const index = privateChats.findIndex(
-              (chat) => chat.username === name
-            )!;
-            const newPrivateChats = await getPrivateChats();
-            newPrivateChat = newPrivateChats[index];
-
-            dispatch({
-              type: ActionType.PRIVATE_CHATS,
-              payload: newPrivateChats,
-            });
-
-            const newPrivateMessages = {
-              ...messages[ChatType.PRIVATE],
-              [newPrivateChat.username]: messages[ChatType.PRIVATE][name],
-            };
-            delete newPrivateMessages[name];
-
-            dispatch({
-              type: ActionType.MESSAGES,
-              payload: {
-                ...messages,
-                [ChatType.PRIVATE]: newPrivateMessages,
-              },
-            });
-          }
+          const state =
+            ChatState[
+              e.currentTarget.getAttribute(
+                "data-state"
+              )! as keyof typeof ChatState
+            ];
 
           dispatch({
             type: ActionType.CURRENT_CHAT,
             payload: {
-              username: newPrivateChat.username,
-              avatar: newPrivateChat.avatar || "/user-icon.svg",
+              username: name,
+              avatar: image,
               type: ChatType.PRIVATE,
               unreadCount: 0,
               lastReadTime: 0,
+              id,
+              state,
             },
           });
           break;
         }
         case ChatType.BOT: {
-          const index = botChats.findIndex(
-            (botChat) => botChat.botName === name
-          )!;
-          const newBotChats = await getBotChats();
-          const newBotChat = newBotChats[index];
+          const state =
+            ChatState[
+              e.currentTarget.getAttribute(
+                "data-state"
+              )! as keyof typeof ChatState
+            ];
+          // const index = botChats.findIndex(
+          //   (botChat) => botChat.botName === name
+          // )!;
+          // const newBotChats = await getBotChats();
+          // const newBotChat = newBotChats[index];
 
-          dispatch({
-            type: ActionType.BOT_CHATS,
-            payload: newBotChats,
-          });
+          // dispatch({
+          //   type: ActionType.BOT_CHATS,
+          //   payload: newBotChats,
+          // });
 
+          // dispatch({
+          //   type: ActionType.CURRENT_CHAT,
+          //   payload: {
+          //     botName: newBotChat.botName,
+          //     avatar: newBotChat.avatar || "/user-icon.svg",
+          //     type: ChatType.BOT,
+          //     unreadCount: 0,
+          //     lastReadTime: 0,
+          //     state,
+          //   },
+          // });
           dispatch({
             type: ActionType.CURRENT_CHAT,
             payload: {
-              botName: newBotChat.botName,
-              avatar: newBotChat.avatar || "/user-icon.svg",
+              botName: name,
+              avatar: image,
               type: ChatType.BOT,
               unreadCount: 0,
               lastReadTime: 0,
+              state,
+              id,
             },
           });
           break;
         }
         case "info": {
+          const state =
+            ChatState[
+              e.currentTarget.getAttribute(
+                "data-state"
+              )! as keyof typeof ChatState
+            ];
           dispatch({
             type: ActionType.CURRENT_CHAT,
             payload: {
@@ -274,6 +284,8 @@ const UserChats = () => {
               type: "info",
               unreadCount: 0,
               lastReadTime: 0,
+              state,
+              id: id,
             },
           });
           break;
@@ -288,13 +300,11 @@ const UserChats = () => {
   };
 
   const getLastMessageTimestamp = (chat: Chat | InfoChat) => {
-    const chatName = getChatName(chat);
-
     let timestamp = 0;
     if (chat.type === "info") {
       return timestamp;
     }
-    const chatMessages = messages[chat.type][chatName];
+    const chatMessages = messages[chat.type][chat.id];
     if (chatMessages && chatMessages.length > 0) {
       timestamp = chatMessages[chatMessages.length - 1].timestamp;
     }
@@ -323,12 +333,12 @@ const UserChats = () => {
   const countUnreadMessages = (
     messages: Messages,
     chatType: ChatType,
-    chatName: string,
+    chatId: string,
     lastReadTime: number
   ) => {
     let counter = 0;
 
-    const chatMessages = messages[chatType][chatName];
+    const chatMessages = messages[chatType][chatId];
     if (chatMessages) {
       counter =
         chatMessages.length - highestLower(chatMessages, lastReadTime) - 1;
@@ -351,12 +361,16 @@ const UserChats = () => {
 
       const chatName = getChatName(chat);
       const newChat = { ...chat };
-      newChat.unreadCount = countUnreadMessages(
-        messages,
-        chat.type,
-        chatName,
-        chat.lastReadTime
-      );
+
+      if (newChat.unreadCount == 0) {
+        newChat.unreadCount = countUnreadMessages(
+          messages,
+          chat.type,
+          chatName,
+          chat.lastReadTime
+        );
+      }
+
       return newChat;
     });
 
@@ -367,7 +381,6 @@ const UserChats = () => {
     );
     setChats(sortedChats);
   }, [privateChats, groupChats, botChats, infoChats, messages]);
-
   const switchToSettings = () => {
     dispatch({ type: ActionType.PANEL_MODE, payload: PanelMode.SETTINGS });
     dispatch({ type: ActionType.CURRENT_CHAT, payload: null });
@@ -390,11 +403,16 @@ const UserChats = () => {
   const handleDeleteChats = async () => {
     deleteChats(chatsToDelete.current);
 
+    const newMessages = {
+      ...messages,
+    };
+
+    //  delete chats
     const newPrivateChats = privateChats.filter(
-      (item) => !chatsToDelete.current.privateChats.includes(item.username)
+      (item) => !chatsToDelete.current.privateChats.includes(item.id)
     );
     const newBotChats = botChats.filter(
-      (item) => !chatsToDelete.current.botChats.includes(item.botName)
+      (item) => !chatsToDelete.current.botChats.includes(item.id)
     );
     const newGroupChats = groupChats.filter(
       (item) => !chatsToDelete.current.groupChats.includes(item.id)
@@ -403,36 +421,24 @@ const UserChats = () => {
     dispatch({ type: ActionType.BOT_CHATS, payload: newBotChats });
     dispatch({ type: ActionType.GROUP_CHATS, payload: newGroupChats });
 
-    const newPrivateMessages = {
-      ...messages[ChatType.PRIVATE],
-    };
-    const newBotMessages = {
-      ...messages[ChatType.BOT],
-    };
-    const newGroupMessages = {
-      ...messages[ChatType.GROUP],
-    };
-
-    chatsToDelete.current.privateChats.forEach((username) => {
-      delete newPrivateMessages[username];
+    //  delete messages
+    chatsToDelete.current.privateChats.forEach((id) => {
+      delete messages[ChatType.PRIVATE][id];
     });
 
-    chatsToDelete.current.botChats.forEach((username) => {
-      delete newBotMessages[username];
+    chatsToDelete.current.botChats.forEach((id) => {
+      delete messages[ChatType.BOT][id];
     });
 
-    chatsToDelete.current.groupChats.forEach((username) => {
-      delete newGroupMessages[username];
+    chatsToDelete.current.groupChats.forEach((id) => {
+      delete messages[ChatType.GROUP][id];
     });
 
     dispatch({
       type: ActionType.MESSAGES,
-      payload: {
-        [ChatType.BOT]: newBotMessages,
-        [ChatType.GROUP]: newGroupMessages,
-        [ChatType.PRIVATE]: newPrivateMessages,
-      },
+      payload: newMessages,
     });
+
     dispatch({
       type: ActionType.MODAL_MODE,
       payload: {
