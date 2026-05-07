@@ -18,6 +18,20 @@ A modern, feature-rich chat application built with **Spring Boot** and **React**
 - 💾 **MongoDB Database** - Persistent data storage with MongoDB Atlas
 - ⚡ **Fast & Modern Stack** - Vite + React for optimal frontend performance
 
+---
+
+## 🎥 Demo & Screenshots
+
+### Authentication & Bot Integration
+
+![Login and Bots Demo](demos/Login%20and%20Bots.gif)
+
+### Real-Time Private Messaging
+
+![Private Messaging Demo](demos/Private%20msg.gif)
+
+---
+
 ## �🏗️ Architecture
 
 ### Tech Stack
